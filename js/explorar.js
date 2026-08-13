@@ -7,7 +7,7 @@ let listaGlobalArtistas = [];
 // Configuración de Caché
 const CACHE_KEY = 'ggmusic_cache_artistas';
 const CACHE_TIME_KEY = 'ggmusic_cache_artistas_time';
-const CACHE_TTL = 10 * 60 * 1000; // 5 minutos en milisegundos
+const CACHE_TTL = 15 * 60 * 1000; // 5 minutos en milisegundos
 
 // Suma el likesCount...
 function calcularTotalLikesPerfil(item) {

@@ -26,7 +26,7 @@ let todosLosProductores = [];
 // Configuración de Caché
 const CACHE_KEY = 'ggmusic_cache_productores';
 const CACHE_TIME_KEY = 'ggmusic_cache_productores_time';
-const CACHE_TTL = 10 * 60 * 1000; // 5 minutos en milisegundos
+const CACHE_TTL = 15 * 60 * 1000; // 5 minutos en milisegundos
 
 // Suma el likesCount de cada tema del array "temas" del perfil — igual
 // criterio que usa admin.html para la columna "Métricas".
