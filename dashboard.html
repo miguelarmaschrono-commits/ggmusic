@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Artista - GGmusic</title>
+    <link rel="shortcut icon" href="assets/favicon/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
+    <link rel="manifest" href="assets/favicon/site.webmanifest">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background-color: #334155; border-radius: 20px; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen pb-16 antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- Navegación -->
+    <nav class="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/80 border-b border-slate-800/60">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
+            <h1 class="text-2xl font-black tracking-tighter text-white">
+                GG<span class="text-indigo-500">music</span> 
+                <span class="text-xs text-slate-400 font-normal tracking-normal border-l border-slate-700/60 pl-3.5 ml-1">Panel Creador</span>
+            </h1>
+            <div class="flex items-center gap-4">
+                <a href="index.html" class="text-xs md:text-sm text-slate-400 hover:text-white transition font-medium">Ver App Pública</a>
+                <button id="btn-logout" class="bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 text-xs px-3.5 py-1.5 rounded-full font-bold transition">
+                    Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        
+        <!-- Tarjeta de Perfil Hero -->
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-950/40 via-slate-900 to-slate-900 border border-slate-800/80 p-6 md:p-8 shadow-2xl backdrop-blur-md">
+            <div class="absolute -top-24 -left-24 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-24 -right-24 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6">
+                <div class="relative group flex-shrink-0">
+                    <div class="p-1 rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-xl shadow-indigo-500/10">
+                        <img id="avatar-preview" src="https://ui-avatars.com/api/?name=Artista&background=random" alt="Avatar" class="w-24 h-24 rounded-full object-cover border-2 border-slate-900">
+                    </div>
+                    
+                    <label class="absolute inset-0 flex items-center justify-center bg-slate-950/70 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition duration-200 border border-indigo-500/30">
+                        <span id="texto-btn-foto" class="text-white text-[10px] font-bold tracking-wider uppercase text-center px-1">
+                            📷 Cambiar
+                        </span>
+                        <input type="file" id="input-cambiar-foto" accept="image/*" class="hidden">
+                    </label>
+                </div>
+
+                <div class="text-center md:text-left flex-grow space-y-3">
+                    <div class="flex flex-col md:flex-row items-center gap-3">
+                        <h2 id="nombre-header" class="text-2xl font-extrabold text-white tracking-tight">Cargando...</h2>
+                        <span id="badge-verificado" class="bg-slate-800/80 text-slate-400 border border-slate-700/60 text-[10px] font-semibold px-2.5 py-0.5 rounded-full backdrop-blur-md">
+                            Cargando...
+                        </span>
+                    </div>
+
+                    <div class="flex justify-center md:justify-start items-center gap-6 text-sm py-2 border-y border-slate-800/80 my-2">
+                        <div>
+                            <span id="stat-temas" class="font-extrabold text-white block md:inline">0</span> 
+                            <span class="text-slate-400 text-xs ml-1">Temas</span>
+                        </div>
+                        <div class="text-slate-700 select-none">•</div>
+                        <div>
+                            <span id="stat-seguidores" class="font-extrabold text-white block md:inline">0</span> 
+                            <span class="text-slate-400 text-xs ml-1">Seguidores</span>
+                        </div>
+                        <div class="text-slate-700 select-none">•</div>
+                        <div>
+                            <span id="stat-likes" class="font-extrabold text-white block md:inline">0</span> 
+                            <span class="text-slate-400 text-xs ml-1">Me gusta</span>
+                        </div>
+                        <div class="text-slate-700 select-none">•</div>
+                        <div>
+                            <span id="zona-header" class="font-semibold text-indigo-400 block md:inline">---</span>
+                        </div>
+                    </div>
+
+                    <p id="email-header" class="text-slate-400 text-xs font-mono">---</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de Edición -->
+        <div class="bg-slate-900/60 rounded-3xl p-6 md:p-8 shadow-2xl border border-slate-800/80 backdrop-blur-md">
+            <h3 class="text-xl font-bold mb-6 border-b border-slate-800/80 pb-4 flex items-center gap-2 text-white">
+                ✏️ Editar Información del Perfil
+            </h3>
+
+            <form id="form-dashboard" class="space-y-8">
+                
+                <!-- Sección 1 -->
+                <div>
+                    <h4 class="text-xs font-bold text-indigo-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500 shadow-sm shadow-indigo-500"></span> 1. Perfil Musical
+                    </h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1.5 font-medium">Nombre Artístico</label>
+                            <input type="text" id="dash-nombre" class="w-full bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 text-slate-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition duration-200 placeholder-slate-600" required>
+                        </div>
+                        
+                        <div class="relative" id="contenedorDashZona">
+                            <label class="block text-xs text-slate-400 mb-1.5 font-medium">Zona Base</label>
+                            <input type="hidden" id="dash-zona" value="">
+                            <button type="button" id="btnDashZona" class="w-full bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition duration-200 text-left flex justify-between items-center">
+                                <span id="textoDashZona" class="truncate">Selecciona una zona</span>
+                                <svg class="w-4 h-4 text-slate-400 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            
+                            <ul id="listaDashZonas" class="hidden absolute z-50 w-full bg-slate-900 border border-slate-700 mt-2 rounded-xl shadow-2xl max-h-48 overflow-y-auto scrollbar-thin">
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Todas">Todas las zonas</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Barlovento">Barlovento</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Caucagua">Caucagua</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Guarenas">Guarenas</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Guatire">Guatire</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Araira">Araira</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Caracas">Caracas</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Petare">Petare</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition" data-value="Los Teques">Los Teques</li>
+                            </ul>
+                        </div>
+
+                        <div class="relative" id="contenedorDashGenero">
+                            <label class="block text-xs text-slate-400 mb-1.5 font-medium">Género Principal</label>
+                            <input type="hidden" id="dash-genero" value="">
+                            <button type="button" id="btnDashGenero" class="w-full bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition duration-200 text-left flex justify-between items-center">
+                                <span id="textoDashGenero" class="truncate">Selecciona un género</span>
+                                <svg class="w-4 h-4 text-slate-400 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            
+                            <ul id="listaDashGeneros" class="hidden absolute z-50 w-full bg-slate-900 border border-slate-700 mt-2 rounded-xl shadow-2xl max-h-48 overflow-y-auto scrollbar-thin">
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Musica Urbana">Musica Urbana</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Rap / Hip-Hop">Rap / Hip-Hop</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Trap / Drill">Trap / Drill</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Reggaeton">Reggaeton</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Afrogaita">Afrogaita</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Afrobeat">Afrobeat</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Pop">Pop</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Rock / Alternativo">Rock / Alternativo</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="R&B">R&B</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Salsa / Caribeño">Salsa / Caribeño</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Jazz">Jazz</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition" data-value="Joropo">Joropo</li>
+                            </ul>
+                        </div>
+
+                        <div class="relative" id="contenedorDashGeneroSecundario">
+                            <label class="block text-xs text-slate-400 mb-1.5 font-medium">Género Secundario (Opcional)</label>
+                            <input type="hidden" id="dash-genero-secundario" value="">
+                            <button type="button" id="btnDashGeneroSec" class="w-full bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 text-slate-200 text-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition duration-200 text-left flex justify-between items-center">
+                                <span id="textoDashGeneroSec" class="truncate">Ninguno</span>
+                                <svg class="w-4 h-4 text-slate-400 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            
+                            <ul id="listaDashGenerosSec" class="hidden absolute z-50 w-full bg-slate-900 border border-slate-700 mt-2 rounded-xl shadow-2xl max-h-48 overflow-y-auto scrollbar-thin">
+                                <li class="px-4 py-2.5 text-sm text-slate-400 hover:bg-slate-800 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="">Ninguno</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Musica Urbana">Musica Urbana</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Rap / Hip-Hop">Rap / Hip-Hop</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Trap / Drill">Trap / Drill</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Reggaeton">Reggaeton</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Afrogaita">Afrogaita</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Afrobeat">Afrobeat</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Pop">Pop</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Rock / Alternativo">Rock / Alternativo</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="R&B">R&B</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Salsa / Caribeño">Salsa / Caribeño</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Jazz">Jazz</li>
+                                <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition" data-value="Joropo">Joropo</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección 2 -->
+                <div class="pt-6 border-t border-slate-800/80">
+                    <h4 class="text-xs font-bold text-indigo-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500 shadow-sm shadow-indigo-500"></span> 2. Enlaces y Redes Sociales
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1.5 font-medium">Instagram</label>
+                            <input type="url" id="red-instagram" placeholder="https://instagram.com/tu_usuario" class="w-full bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 text-slate-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition duration-200 placeholder-slate-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1.5 font-medium">TikTok</label>
+                            <input type="url" id="red-tiktok" placeholder="https://tiktok.com/@tu_usuario" class="w-full bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 text-slate-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition duration-200 placeholder-slate-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1.5 font-medium">Spotify (Perfil o Artista)</label>
+                            <input type="url" id="red-spotify" placeholder="https://open.spotify.com/artist/..." class="w-full bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 text-slate-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition duration-200 placeholder-slate-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1.5 font-medium">YouTube (Canal)</label>
+                            <input type="url" id="red-youtube" placeholder="https://youtube.com/@tu_canal" class="w-full bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 text-slate-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition duration-200 placeholder-slate-600">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs text-slate-400 mb-1.5 font-medium">Facebook</label>
+                            <input type="url" id="red-facebook" placeholder="https://facebook.com/tu_pagina" class="w-full bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 text-slate-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition duration-200 placeholder-slate-600">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección 3 -->
+                <div class="pt-6 border-t border-slate-800/80">
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-indigo-500 shadow-sm shadow-indigo-500"></span> 3. Videografía / Temas
+                        </h4>
+                        <span id="contador-temas" class="text-xs text-indigo-300 font-mono bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20 font-semibold">0 / 10 temas</span>
+                    </div>
+                    
+                    <p class="text-xs text-slate-400 mb-4">Agrega los enlaces de YouTube que deseas mostrar en tu perfil, indicando el nombre de la canción, la fecha de lanzamiento y su género.</p>
+
+                    <div id="lista-temas-container" class="space-y-4 mb-4"></div>
+
+                    <button type="button" id="btn-agregar-tema" class="w-full py-3 px-4 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-xl text-xs font-bold transition duration-200 flex items-center justify-center gap-2 shadow-sm">
+                        ➕ Agregar Nuevo Tema
+                    </button>
+                    
+                    <div id="msg-limite-alcanzado" class="hidden mt-4 p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-center">
+                        <p class="text-sm text-yellow-400 mb-2">
+                            Has alcanzado el límite de temas disponibles.
+                        </p>
+                        <a id="btn-whatsapp-limite" href="#" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#25D366]/20 text-[#25D366] hover:bg-[#25D366]/30 border border-[#25D366]/50 rounded-lg text-sm font-semibold transition-colors">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+                            </svg>
+                            Contactar al administrador
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Sección 4 -->
+                <div class="pt-6 border-t border-slate-800/80">
+                    <h4 class="text-xs font-bold text-indigo-400 mb-3 uppercase tracking-wider flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500 shadow-sm shadow-indigo-500"></span> 4. Biografía
+                    </h4>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1.5 font-medium">Cuéntale a tu público sobre ti (Máximo 150 caracteres)</label>
+                        <textarea id="dash-biografia" maxlength="150" rows="3" placeholder="Ej: Cantante urbano con pasión por..." class="w-full bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 text-slate-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition duration-200 resize-none placeholder-slate-600"></textarea>
+                        <p class="text-[10px] text-slate-500 text-right mt-1 font-mono"><span id="contador-bio">0</span>/150</p>
+                    </div>
+                </div>
+
+                <div id="alerta-dash" class="hidden mb-6 p-3.5 rounded-xl text-sm text-center font-medium shadow-md"></div>
+
+                <button type="submit" id="btn-guardar" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 px-4 rounded-xl transition duration-200 shadow-lg shadow-indigo-600/20 text-sm cursor-pointer">
+                    Guardar Cambios
+                </button>
+            </form>
+        </div>
+
+        <!-- Zona de Peligro: Eliminar Cuenta -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-slate-900 to-red-950/20 rounded-3xl p-6 md:p-8 shadow-2xl border border-red-500/20 transition-all duration-300 hover:border-red-500/40">
+            <div class="absolute -top-12 -right-12 w-40 h-40 bg-red-600/5 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="relative z-10">
+                <div class="flex items-center gap-3 mb-4 border-b border-red-500/20 pb-4">
+                    <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 shadow-inner">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </span>
+                    <h3 class="text-xl font-bold text-red-500">Zona de Peligro</h3>
+                </div>
+                
+                <p class="text-sm text-slate-400 mb-6">Eliminar tu cuenta es una acción irreversible. Se borrarán todos tus datos, temas y seguidores permanentemente.</p>
+                
+                <button type="button" id="btn-mostrar-eliminar" class="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 px-6 py-3 rounded-xl text-sm font-bold transition duration-200">
+                    Eliminar mi cuenta
+                </button>
+
+                <div id="panel-eliminar-cuenta" class="hidden mt-6 space-y-4 border-t border-red-500/20 pt-6">
+                    <div>
+                        <label class="block text-xs text-red-400 mb-1.5 font-medium">Contraseña para confirmar</label>
+                        <input type="password" id="input-password-eliminar" class="w-full bg-slate-950/70 border border-red-500/30 rounded-xl p-2.5 text-slate-200 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-500/20 focus:outline-none transition duration-200" placeholder="Ingresa tu contraseña">
+                    </div>
+                    <div class="flex gap-3">
+                        <button type="button" id="btn-cancelar-eliminar" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl transition duration-200 text-sm">
+                            Cancelar
+                        </button>
+                        <button type="button" id="btn-confirmar-eliminar" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 rounded-xl transition duration-200 text-sm">
+                            Sí, eliminar mi cuenta
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="js/dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración - GGmusic</title>
+    <link rel="shortcut icon" href="assets/favicon/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
+    <link rel="manifest" href="assets/favicon/site.webmanifest">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        /* Scrollbar personalizado */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        
+        /* Transición suave para las secciones */
+        .animate-fade-in { animation: fadeIn 0.25s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-[#0f172a] text-slate-100 font-sans min-h-screen flex antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- Menú Lateral (Sidebar) -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 transform -translate-x-full transition-transform duration-300 md:translate-x-0 md:sticky md:top-0 md:flex flex-col w-64 bg-[#1e293b]/95 backdrop-blur-md border-r border-slate-800/80 h-screen shrink-0">
+        <div class="p-6 border-b border-slate-800/80 flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-black text-lg">
+                GG
+            </div>
+            <div>
+                <h1 class="text-xl font-black text-white tracking-wide leading-none">GGmusic</h1>
+                <span class="text-[10px] text-indigo-400 font-mono uppercase tracking-widest font-semibold">Panel Admin</span>
+            </div>
+        </div>
+        
+        <nav class="flex-1 p-4 space-y-1.5">
+            <!-- Botón Dashboard -->
+            <a href="#" id="nav-dashboard" class="flex items-center gap-3 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 px-4 py-3 rounded-xl font-semibold transition cursor-pointer text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                Dashboard
+            </a>
+            <!-- Botón Artistas -->
+            <a href="#" id="nav-artistas" class="flex items-center gap-3 text-slate-400 hover:bg-slate-800/60 hover:text-white px-4 py-3 rounded-xl font-medium transition cursor-pointer text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                Artistas
+            </a>
+            <!-- Botón Productores -->
+            <a href="#" id="nav-productores" class="flex items-center gap-3 text-slate-400 hover:bg-slate-800/60 hover:text-white px-4 py-3 rounded-xl font-medium transition cursor-pointer text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                Productores
+            </a>
+            <!-- Botón Estadísticas -->
+            <a href="#" id="nav-estadisticas" class="flex items-center gap-3 text-slate-400 hover:bg-slate-800/60 hover:text-white px-4 py-3 rounded-xl font-medium transition cursor-pointer text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                Estadísticas
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800/80">
+            <button id="btn-logout-admin" class="w-full flex items-center justify-center gap-2 bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 px-4 py-2.5 rounded-xl transition font-semibold text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                Cerrar Sesión
+            </button>
+        </div>
+    </aside>
+
+    <!-- Contenido Principal -->
+    <main class="flex-1 min-w-0 flex flex-col h-screen overflow-y-auto">
+        
+        <!-- Header Móvil -->
+        <header class="md:hidden flex justify-between items-center p-4 border-b border-slate-800 bg-[#1e293b]/95 backdrop-blur-md sticky top-0 z-20">
+            <div class="flex items-center gap-2">
+                <span class="font-black text-indigo-400">GGmusic</span>
+                <span class="text-xs text-slate-400 border-l border-slate-700 pl-2">Admin</span>
+            </div>
+            <button id="btn-menu" class="text-slate-300 p-2 focus:outline-none hover:bg-slate-800 rounded-lg">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+        </header>
+
+        <div class="p-6 md:p-8 space-y-8 max-w-7xl mx-auto w-full">
+            
+            <!-- SECCIÓN 1: DASHBOARD -->
+            <div id="section-dashboard" class="block animate-fade-in space-y-6">
+                <div>
+                    <h2 class="text-2xl font-black text-white tracking-tight">Resumen de Plataforma</h2>
+                    <p class="text-xs text-slate-400 mt-1">Métricas globales y estado general del catálogo de GGmusic.</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
+                    <div class="bg-[#1e293b]/80 border border-slate-800 p-5 rounded-2xl shadow-lg relative overflow-hidden backdrop-blur-sm">
+                        <div class="absolute -right-4 -top-4 w-20 h-20 bg-indigo-500/10 rounded-full blur-xl"></div>
+                        <p class="text-slate-400 text-xs font-semibold mb-1 uppercase tracking-wider">Verificados</p>
+                        <h3 id="stat-verificados" class="text-3xl font-black text-indigo-400">---</h3>
+                    </div>
+                    <div class="bg-[#1e293b]/80 border border-slate-800 p-5 rounded-2xl shadow-lg relative overflow-hidden backdrop-blur-sm">
+                        <div class="absolute -right-4 -top-4 w-20 h-20 bg-rose-500/10 rounded-full blur-xl"></div>
+                        <p class="text-slate-400 text-xs font-semibold mb-1 uppercase tracking-wider">Anulados</p>
+                        <h3 id="stat-suspendidos" class="text-3xl font-black text-rose-400">---</h3>
+                    </div>
+                    <div class="bg-[#1e293b]/80 border border-slate-800 p-5 rounded-2xl shadow-lg relative overflow-hidden backdrop-blur-sm">
+                        <div class="absolute -right-4 -top-4 w-20 h-20 bg-indigo-500/10 rounded-full blur-xl"></div>
+                        <p class="text-slate-400 text-xs font-semibold mb-1 uppercase tracking-wider">Total Artistas</p>
+                        <h3 id="stat-total-artistas" class="text-3xl font-black text-white">---</h3>
+                    </div>
+                    <div class="bg-[#1e293b]/80 border border-slate-800 p-5 rounded-2xl shadow-lg relative overflow-hidden backdrop-blur-sm">
+                        <div class="absolute -right-4 -top-4 w-20 h-20 bg-emerald-500/10 rounded-full blur-xl"></div>
+                        <p class="text-slate-400 text-xs font-semibold mb-1 uppercase tracking-wider">Total Productores</p>
+                        <h3 id="stat-total-productores" class="text-3xl font-black text-emerald-400">---</h3>
+                    </div>
+                    <div class="bg-[#1e293b]/80 border border-slate-800 p-5 rounded-2xl shadow-lg relative overflow-hidden backdrop-blur-sm">
+                        <div class="absolute -right-4 -top-4 w-20 h-20 bg-sky-500/10 rounded-full blur-xl"></div>
+                        <p class="text-slate-400 text-xs font-semibold mb-1 uppercase tracking-wider">Total Oyentes</p>
+                        <h3 id="stat-total-oyentes" class="text-3xl font-black text-sky-400">---</h3>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 text-xs text-slate-400 flex items-start gap-3">
+                    <svg class="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span><strong>Nota de gestión:</strong> Un perfil suspendido deja de mostrarse en las exploraciones públicas y páginas de perfil, pero conserva sus datos intactos y puede reactivarse con un clic en cualquier momento.</span>
+                </div>
+
+                <!-- Tarjeta: Feed de Inicio (Top 15 controlado manualmente) -->
+                <div class="bg-[#1e293b]/80 border border-slate-800 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                🔄 Feed de Inicio (Top 15)
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1 max-w-xl">
+                                La portada pública NO consulta Firestore en cada visita: muestra una
+                                foto fija de este ranking (top 15 artistas y top 15 productores por
+                                seguidores). Actualízala manualmente cuando quieras refrescarla.
+                            </p>
+                            <p id="feed-ultima-actualizacion" class="text-[11px] text-slate-500 font-mono mt-2">
+                                Cargando estado del feed...
+                            </p>
+                        </div>
+                        <button id="btn-actualizar-feed" class="shrink-0 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/20">
+                            Actualizar Feed
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tarjeta: Feed de Canciones (Global y Ligas) -->
+                <div class="bg-[#1e293b]/80 border border-slate-800 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                🎵 Feed de Canciones (Global, Novedades y Ligas)
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1 max-w-xl">
+                                No existe una colección "canciones" independiente — cada tema vive
+                                dentro del perfil de su creador. Este snapshot recorre
+                                todos los perfiles, aplana sus temas y los clasifica en: un <strong class="text-slate-300">Top Global</strong> (30 más votadas), <strong class="text-slate-300">Novedades</strong> (recién publicadas) y el nuevo <strong class="text-slate-300">Sistema de Ligas</strong> (En Ascenso, Populares, Hits y Leyendas según sus rangos de likes). Todo queda empaquetado para que el cliente lo consuma instantáneamente sin saturar Firestore en cada visita. Se actualiza manualmente.
+                            </p>
+                            <p id="feed-canciones-ultima-actualizacion" class="text-[11px] text-slate-500 font-mono mt-2">
+                                Cargando estado del feed de canciones...
+                            </p>
+                        </div>
+                        <button id="btn-actualizar-feed-canciones" class="shrink-0 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/20">
+                            Actualizar Feed de Canciones
+                        </button>
+                    </div>
+                </div>
+            </div>    
+            <!-- SECCIÓN 2: GESTIÓN DE ARTISTAS -->
+            <div id="section-artistas" class="hidden animate-fade-in">
+                <div class="bg-[#1e293b]/90 rounded-2xl border border-slate-800 shadow-xl overflow-hidden backdrop-blur-sm">
+                    <div class="p-5 border-b border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 .895-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 .895-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+                            Gestión de Artistas
+                        </h3>
+                        
+                        <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                            <div class="relative w-full sm:w-72">
+                                <input type="text" id="buscador-admin-artistas" placeholder="Buscar por nombre, género o zona..." class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl py-2 px-10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
+                                <svg class="w-4 h-4 text-slate-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                            <select id="orden-admin-artistas" class="w-full sm:w-auto bg-slate-900/90 border border-slate-700/80 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-indigo-500 transition cursor-pointer">
+                                <option value="nombre">Ordenar: Nombre (A-Z)</option>
+                                <option value="seguidores">Ordenar: Más seguidores</option>
+                                <option value="likes">Ordenar: Más me gusta</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-900/70 text-[11px] text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                                    <th class="p-4 font-bold">Artista</th>
+                                    <th class="p-4 font-bold">Zona / Género</th>
+                                    <th class="p-4 font-bold">Métricas</th>
+                                    <th class="p-4 font-bold">Estado</th>
+                                    <th class="p-4 font-bold text-center">Acciones & Cuota</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-artistas-body" class="divide-y divide-slate-800/60 text-sm">
+                                <!-- Contenido inyectado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 3: GESTIÓN DE PRODUCTORES -->
+            <div id="section-productores" class="hidden animate-fade-in">
+                <div class="bg-[#1e293b]/90 rounded-2xl border border-slate-800 shadow-xl overflow-hidden backdrop-blur-sm">
+                    <div class="p-5 border-b border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"/></svg>
+                            Gestión de Productores
+                        </h3>
+                        
+                        <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                            <div class="relative w-full sm:w-72">
+                                <input type="text" id="buscador-admin-productores" placeholder="Buscar por nombre o especialidad..." class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl py-2 px-10 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition">
+                                <svg class="w-4 h-4 text-slate-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                            <select id="orden-admin-productores" class="w-full sm:w-auto bg-slate-900/90 border border-slate-700/80 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-emerald-500 transition cursor-pointer">
+                                <option value="nombre">Ordenar: Nombre (A-Z)</option>
+                                <option value="seguidores">Ordenar: Más seguidores</option>
+                                <option value="likes">Ordenar: Más me gusta</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-900/70 text-[11px] text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                                    <th class="p-4 font-bold">Productor</th>
+                                    <th class="p-4 font-bold">Zona / Especialidad</th>
+                                    <th class="p-4 font-bold">Métricas</th>
+                                    <th class="p-4 font-bold">Estado</th>
+                                    <th class="p-4 font-bold text-center">Acciones & Cuota</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-productores-body" class="divide-y divide-slate-800/60 text-sm">
+                                <!-- Contenido inyectado por JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 4: ESTADÍSTICAS -->
+            <div id="section-estadisticas" class="hidden animate-fade-in space-y-6">
+                <h2 class="text-2xl font-black text-white tracking-tight flex items-center gap-2">
+                    <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    Estadísticas Detalladas
+                </h2>
+
+                <div>
+                    <h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <span>🎙️</span> Categorización de Artistas
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-[#1e293b]/80 rounded-2xl border border-slate-800 p-6 shadow-xl backdrop-blur-sm">
+                            <h4 class="text-sm font-bold text-slate-200 mb-4 border-b border-slate-700/60 pb-2">Top Géneros Musicales</h4>
+                            <div id="stats-generos-artistas" class="space-y-4"></div>
+                        </div>
+                        <div class="bg-[#1e293b]/80 rounded-2xl border border-slate-800 p-6 shadow-xl backdrop-blur-sm">
+                            <h4 class="text-sm font-bold text-slate-200 mb-4 border-b border-slate-700/60 pb-2">Distribución por Zonas</h4>
+                            <div id="stats-zonas-artistas" class="space-y-4"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <span>🎧</span> Categorización de Productores
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-[#1e293b]/80 rounded-2xl border border-slate-800 p-6 shadow-xl backdrop-blur-sm">
+                            <h4 class="text-sm font-bold text-slate-200 mb-4 border-b border-slate-700/60 pb-2">Top Especialidades</h4>
+                            <div id="stats-especialidad-productores" class="space-y-4"></div>
+                        </div>
+                        <div class="bg-[#1e293b]/80 rounded-2xl border border-slate-800 p-6 shadow-xl backdrop-blur-sm">
+                            <h4 class="text-sm font-bold text-slate-200 mb-4 border-b border-slate-700/60 pb-2">Distribución por Zonas</h4>
+                            <div id="stats-zonas-productores" class="space-y-4"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Script Modular de Administración -->
+    <script type="module">
+        import {
+            obtenerTodosLosArtistas,
+            obtenerTodosLosProductores,
+            obtenerTodosLosOyentes,
+            cambiarEstadoVerificacion,
+            toggleSuspension,
+            ampliarLimite,
+            actualizarFeedHome,
+            actualizarFeedCanciones
+        } from './js/services/adminDb.js';
+        import { signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { auth, db } from './js/firebase-config.js';
+        import { protegerRutaAdmin } from './js/ui/auth-guard.js';
+
+        let listaGlobalArtistas = [];
+        let listaGlobalProductores = [];
+        let listaGlobalOyentes = [];
+
+        // Estado de ordenamiento de cada tabla — independiente entre sí,
+        // así elegir "Más seguidores" en Artistas no afecta a Productores.
+        let ordenArtistas = 'nombre';
+        let ordenProductores = 'nombre';
+
+        // Reutilizada tanto por construirFila() (columna "Métricas") como
+        // por el ordenamiento, para no calcular la suma de likes dos veces
+        // con lógicas separadas que puedan desincronizarse.
+        function calcularTotalLikesPerfil(item) {
+            const temas = Array.isArray(item.temas) ? item.temas : [];
+            return temas.reduce((suma, tema) => suma + (tema.likesCount || 0), 0);
+        }
+
+        function ordenarLista(lista, criterio) {
+            const copia = [...lista];
+            if (criterio === 'seguidores') {
+                copia.sort((a, b) => (b.seguidoresCount || 0) - (a.seguidoresCount || 0));
+            } else if (criterio === 'likes') {
+                copia.sort((a, b) => calcularTotalLikesPerfil(b) - calcularTotalLikesPerfil(a));
+            } else {
+                copia.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' }));
+            }
+            return copia;
+        }
+
+        window.ejecutarAccion = async (accion, uid, extraParam, tipo) => {
+            let resultado;
+            if (accion === 'verificar') resultado = await cambiarEstadoVerificacion(uid, extraParam);
+            if (accion === 'suspender') resultado = await toggleSuspension(uid, extraParam);
+            if (accion === 'ampliar') resultado = await ampliarLimite(uid, extraParam);
+
+            if (resultado && resultado.exito) {
+                if (tipo === 'productor') {
+                    cargarYRenderizarProductores();
+                } else {
+                    cargarYRenderizarArtistas();
+                }
+            }
+        };
+
+        // ==========================================
+        // FEED DE INICIO (Top 15 / snapshot manual)
+        // ==========================================
+        async function cargarEstadoFeed() {
+            const el = document.getElementById('feed-ultima-actualizacion');
+            if (!el) return;
+            try {
+                const snap = await getDoc(doc(db, 'feedHome', 'actual'));
+                if (snap.exists()) {
+                    const data = snap.data();
+                    const fecha = data.actualizadoEn?.toDate ? data.actualizadoEn.toDate() : null;
+                    const fechaTexto = fecha
+                        ? fecha.toLocaleString('es-VE', { dateStyle: 'medium', timeStyle: 'short' })
+                        : 'Fecha desconocida';
+                    el.textContent = `Última actualización: ${fechaTexto} · ${data.artistas?.length || 0} artistas · ${data.productores?.length || 0} productores`;
+                } else {
+                    el.textContent = 'El feed aún no se ha generado. Presiona "Actualizar Feed" para publicarlo por primera vez.';
+                }
+            } catch (error) {
+                console.error("Error al consultar el estado del feed:", error);
+                el.textContent = 'No se pudo consultar el estado del feed.';
+            }
+        }
+
+        function configurarBotonFeed() {
+            const btn = document.getElementById('btn-actualizar-feed');
+            if (!btn) return;
+
+            btn.addEventListener('click', async () => {
+                btn.disabled = true;
+                const textoOriginal = btn.textContent;
+                btn.textContent = 'Actualizando...';
+
+                const res = await actualizarFeedHome();
+
+                btn.disabled = false;
+                btn.textContent = textoOriginal;
+
+                if (res.exito) {
+                    await cargarEstadoFeed();
+                } else {
+                    alert('No se pudo actualizar el feed: ' + (res.mensaje || 'Error desconocido'));
+                }
+            });
+        }
+
+        // ==========================================
+        // FEED DE CANCIONES (Top 30 / snapshot manual)
+        // ==========================================
+        // Mismo patrón que cargarEstadoFeed()/configurarBotonFeed() de
+        // arriba, apuntando al documento hermano feedCanciones/actual en
+        // vez de feedHome/actual — ver adminDb.js: actualizarFeedCanciones().
+        async function cargarEstadoFeedCanciones() {
+            const el = document.getElementById('feed-canciones-ultima-actualizacion');
+            if (!el) return;
+            try {
+                const snap = await getDoc(doc(db, 'feedCanciones', 'actual'));
+                if (snap.exists()) {
+                    const data = snap.data();
+                    const fecha = data.actualizadoEn?.toDate ? data.actualizadoEn.toDate() : null;
+                    const fechaTexto = fecha
+                        ? fecha.toLocaleString('es-VE', { dateStyle: 'medium', timeStyle: 'short' })
+                        : 'Fecha desconocida';
+                    el.textContent = `Última actualización: ${fechaTexto} · ${data.canciones?.length || 0} canciones · ${data.recienPublicadas?.length || 0} recién publicadas`;
+                } else {
+                    el.textContent = 'El feed de canciones aún no se ha generado. Presiona "Actualizar Feed de Canciones" para publicarlo por primera vez.';
+                }
+            } catch (error) {
+                console.error("Error al consultar el estado del feed de canciones:", error);
+                el.textContent = 'No se pudo consultar el estado del feed de canciones.';
+            }
+        }
+
+        function configurarBotonFeedCanciones() {
+            const btn = document.getElementById('btn-actualizar-feed-canciones');
+            if (!btn) return;
+
+            btn.addEventListener('click', async () => {
+                btn.disabled = true;
+                const textoOriginal = btn.textContent;
+                btn.textContent = 'Actualizando...';
+
+                const res = await actualizarFeedCanciones();
+
+                btn.disabled = false;
+                btn.textContent = textoOriginal;
+
+                if (res.exito) {
+                    await cargarEstadoFeedCanciones();
+                } else {
+                    alert('No se pudo actualizar el feed de canciones: ' + (res.mensaje || 'Error desconocido'));
+                }
+            });
+        }
+
+        // ==========================================
+        // ESTADÍSTICAS
+        // ==========================================
+        function procesarEstadisticas() {
+            const conteoGenerosArt = {};
+            const conteoZonasArt = {};
+            listaGlobalArtistas.forEach(artista => {
+                const genero = artista.genero ? artista.genero.trim().toUpperCase() : 'NO DEFINIDO';
+                const zona = artista.zona ? artista.zona.trim().toUpperCase() : 'NO DEFINIDA';
+                conteoGenerosArt[genero] = (conteoGenerosArt[genero] || 0) + 1;
+                conteoZonasArt[zona] = (conteoZonasArt[zona] || 0) + 1;
+            });
+            renderizarBarras(conteoGenerosArt, 'stats-generos-artistas', 'bg-indigo-500');
+            renderizarBarras(conteoZonasArt, 'stats-zonas-artistas', 'bg-indigo-500');
+
+            const conteoEspecialidadPro = {};
+            const conteoZonasPro = {};
+            listaGlobalProductores.forEach(productor => {
+                const especialidad = productor.especialidad ? productor.especialidad.trim().toUpperCase() : 'NO DEFINIDA';
+                const zona = productor.zona ? productor.zona.trim().toUpperCase() : 'NO DEFINIDA';
+                conteoEspecialidadPro[especialidad] = (conteoEspecialidadPro[especialidad] || 0) + 1;
+                conteoZonasPro[zona] = (conteoZonasPro[zona] || 0) + 1;
+            });
+            renderizarBarras(conteoEspecialidadPro, 'stats-especialidad-productores', 'bg-emerald-500');
+            renderizarBarras(conteoZonasPro, 'stats-zonas-productores', 'bg-emerald-500');
+        }
+
+        function renderizarBarras(objetoDatos, contenedorId, colorClase) {
+            const contenedor = document.getElementById(contenedorId);
+            if (!contenedor) return;
+            contenedor.innerHTML = '';
+
+            const datosOrdenados = Object.entries(objetoDatos).sort((a, b) => b[1] - a[1]);
+
+            if (datosOrdenados.length === 0) {
+                contenedor.innerHTML = '<p class="text-slate-500 text-xs font-mono">Sin datos disponibles.</p>';
+                return;
+            }
+
+            const valorMaximo = datosOrdenados[0][1];
+
+            datosOrdenados.forEach(([etiqueta, cantidad]) => {
+                const porcentaje = (cantidad / valorMaximo) * 100;
+                contenedor.innerHTML += `
+                    <div>
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <span class="text-slate-300 font-bold">${etiqueta}</span>
+                            <span class="text-slate-400 font-mono text-[11px]">${cantidad} perfil(es)</span>
+                        </div>
+                        <div class="w-full bg-slate-900 rounded-full h-2 shadow-inner overflow-hidden">
+                            <div class="${colorClase} h-2 rounded-full transition-all duration-700 ease-out" style="width: ${porcentaje}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function actualizarStatsDashboard() {
+            document.getElementById('stat-total-artistas').textContent = listaGlobalArtistas.length;
+            document.getElementById('stat-total-productores').textContent = listaGlobalProductores.length;
+            document.getElementById('stat-total-oyentes').textContent = listaGlobalOyentes.length;
+
+            const totalVerificados =
+                listaGlobalArtistas.filter(a => a.verificado === true).length +
+                listaGlobalProductores.filter(p => p.verificado === true).length;
+            document.getElementById('stat-verificados').textContent = totalVerificados;
+
+            const totalSuspendidos =
+                listaGlobalArtistas.filter(a => a.suspendido === true).length +
+                listaGlobalProductores.filter(p => p.suspendido === true).length;
+            document.getElementById('stat-suspendidos').textContent = totalSuspendidos;
+
+            procesarEstadisticas();
+        }
+
+        // ==========================================
+        // CONSTRUCCIÓN DE FILAS CON ESTILO PULIDO
+        // ==========================================
+        function construirFila(item, tipo) {
+            const esProductor = tipo === 'productor';
+            const nombre = item.nombre || 'Sin nombre';
+            const campoSecundario = esProductor ? (item.especialidad || 'Sin especialidad') : (item.genero || 'Sin género');
+            const zona = item.zona || 'Sin zona';
+            const limite = item.limiteCanciones || 0;
+            const etiquetaItem = esProductor ? 'trabajos' : 'temas';
+
+            // Métricas: seguidores viene directo del contador denormalizado
+            // en el perfil (seguidoresCount); el total de "me gusta" se
+            // deriva sumando likesCount de cada tema del array "temas".
+            const seguidores = item.seguidoresCount || 0;
+            const totalLikes = calcularTotalLikesPerfil(item);
+            
+            // Iconos vectoriales limpios
+            const iconoAvatar = esProductor
+                ? `<svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 100-6 3 3 0 000 6z"/></svg>`
+                : `<svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 .895-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 .895-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>`;
+            
+            const colorAvatarBg = esProductor ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-indigo-500/10 border-indigo-500/20';
+            const colorLimite = esProductor ? 'text-emerald-400' : 'text-indigo-400';
+
+            const estaVerificado = item.verificado === true;
+            const estaSuspendido = item.suspendido === true;
+
+            const badgeVerificado = estaVerificado
+                ? `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider inline-flex items-center gap-1 backdrop-blur-md">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg> Verificado
+                   </span>`
+                : `<span class="bg-slate-800 text-slate-400 border border-slate-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider inline-flex items-center gap-1">
+                    Pendiente
+                   </span>`;
+
+            const badgeSuspendido = estaSuspendido
+                ? `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider inline-flex items-center gap-1 backdrop-blur-md mt-1">
+                    Anulado / Suspendido
+                   </span>`
+                : '';
+
+            const botonSuspension = estaSuspendido
+                ? `<button onclick="ejecutarAccion('suspender', '${item.id}', ${estaSuspendido}, '${tipo}')" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 p-2 rounded-xl transition" title="Reactivar perfil público">
+                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                   </button>`
+                : `<button onclick="ejecutarAccion('suspender', '${item.id}', ${estaSuspendido}, '${tipo}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 p-2 rounded-xl transition" title="Suspender perfil (Oculta del público sin borrar datos)">
+                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                   </button>`;
+
+            // Botones de ampliar límite organizados
+            const cantidadesLimite = [5, 10, 20, 50, 100];
+            const botonesLimite = cantidadesLimite.map(cantidad => `
+                <button onclick="ejecutarAccion('ampliar', '${item.id}', ${cantidad}, '${tipo}')" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 px-2 py-1 rounded-lg transition text-[10px] font-black tracking-tight" title="Añadir +${cantidad} ${etiquetaItem}">
+                    +${cantidad}
+                </button>
+            `).join('');
+
+            const fila = document.createElement('tr');
+            fila.className = 'hover:bg-slate-800/40 transition border-b border-slate-800/50';
+            fila.innerHTML = `
+                <td class="p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl ${colorAvatarBg} border flex items-center justify-center shrink-0 shadow-inner">
+                            ${iconoAvatar}
+                        </div>
+                        <div>
+                            <p class="font-bold text-white leading-tight">${nombre}</p>
+                            <p class="text-xs text-slate-400 font-mono mt-0.5">Límite: <span class="${colorLimite} font-bold">${limite}</span> ${etiquetaItem}</p>
+                        </div>
+                    </div>
+                </td>
+                <td class="p-4">
+                    <p class="text-slate-200 font-medium text-xs">📍 ${zona}</p>
+                    <p class="text-[11px] ${colorLimite} font-semibold mt-0.5">${campoSecundario}</p>
+                </td>
+                <td class="p-4">
+                    <div class="flex flex-col gap-1.5">
+                        <span class="flex items-center gap-1.5 text-xs text-slate-300 font-semibold" title="Seguidores">
+                            <svg class="w-3.5 h-3.5 text-sky-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 100-8 4 4 0 000 8zm6 3.13a4 4 0 00-3-3.87"></path></svg>
+                            ${seguidores}
+                        </span>
+                        <span class="flex items-center gap-1.5 text-xs text-slate-300 font-semibold" title="Total de me gusta en sus ${etiquetaItem}">
+                            <svg class="w-3.5 h-3.5 text-rose-400 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                            ${totalLikes}
+                        </span>
+                    </div>
+                </td>
+                <td class="p-4">
+                    <div class="flex flex-col items-start">
+                        ${badgeVerificado}
+                        ${badgeSuspendido}
+                    </div>
+                </td>
+                <td class="p-4">
+                    <div class="flex flex-wrap items-center justify-center gap-2">
+                        <button onclick="ejecutarAccion('verificar', '${item.id}', ${estaVerificado}, '${tipo}')" class="bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-500/30 p-2 rounded-xl transition" title="${estaVerificado ? 'Quitar verificado' : 'Otorgar insignia verificado'}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </button>
+
+                        <div class="flex items-center gap-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
+                            ${botonesLimite}
+                        </div>
+
+                        ${botonSuspension}
+                    </div>
+                </td>
+            `;
+            return fila;
+        }
+
+        function mostrarCargando(tbodyId) {
+            const tbody = document.getElementById(tbodyId);
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="p-8 text-center text-slate-500">
+                        <div class="flex flex-col items-center justify-center gap-3">
+                            <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                            <span class="text-xs font-mono">Conectando con Firestore...</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+
+        function mostrarSinCoincidencias(tbodyId) {
+            document.getElementById(tbodyId).innerHTML = `
+                <tr>
+                    <td colspan="5" class="p-8 text-center text-slate-500 text-xs font-mono">
+                        No se encontraron registros en el sistema.
+                    </td>
+                </tr>
+            `;
+        }
+
+        // ==========================================
+        // CARGA Y FILTROS
+        // ==========================================
+        async function cargarYRenderizarArtistas() {
+            if (listaGlobalArtistas.length === 0) mostrarCargando('tabla-artistas-body');
+            listaGlobalArtistas = await obtenerTodosLosArtistas();
+            actualizarStatsDashboard();
+            aplicarFiltroArtistas();
+        }
+
+        function aplicarFiltroArtistas() {
+            const termino = document.getElementById('buscador-admin-artistas').value.toLowerCase();
+            const tbody = document.getElementById('tabla-artistas-body');
+
+            const filtrados = listaGlobalArtistas.filter(artista => {
+                const nombre = (artista.nombre || '').toLowerCase();
+                const genero = (artista.genero || '').toLowerCase();
+                const zona = (artista.zona || '').toLowerCase();
+                return nombre.includes(termino) || genero.includes(termino) || zona.includes(termino);
+            });
+
+            const ordenados = ordenarLista(filtrados, ordenArtistas);
+
+            tbody.innerHTML = '';
+            if (ordenados.length === 0) return mostrarSinCoincidencias('tabla-artistas-body');
+            ordenados.forEach(artista => tbody.appendChild(construirFila(artista, 'artista')));
+        }
+
+        async function cargarYRenderizarProductores() {
+            if (listaGlobalProductores.length === 0) mostrarCargando('tabla-productores-body');
+            listaGlobalProductores = await obtenerTodosLosProductores();
+            actualizarStatsDashboard();
+            aplicarFiltroProductores();
+        }
+
+        function aplicarFiltroProductores() {
+            const termino = document.getElementById('buscador-admin-productores').value.toLowerCase();
+            const tbody = document.getElementById('tabla-productores-body');
+
+            const filtrados = listaGlobalProductores.filter(productor => {
+                const nombre = (productor.nombre || '').toLowerCase();
+                const especialidad = (productor.especialidad || '').toLowerCase();
+                const zona = (productor.zona || '').toLowerCase();
+                return nombre.includes(termino) || especialidad.includes(termino) || zona.includes(termino);
+            });
+
+            const ordenados = ordenarLista(filtrados, ordenProductores);
+
+            tbody.innerHTML = '';
+            if (ordenados.length === 0) return mostrarSinCoincidencias('tabla-productores-body');
+            ordenados.forEach(productor => tbody.appendChild(construirFila(productor, 'productor')));
+        }
+
+        async function cargarOyentes() {
+            listaGlobalOyentes = await obtenerTodosLosOyentes();
+            actualizarStatsDashboard();
+        }
+
+        // ==========================================
+        // INICIALIZACIÓN
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            protegerRutaAdmin(() => {
+                cargarYRenderizarArtistas();
+                cargarYRenderizarProductores();
+                cargarOyentes();
+                cargarEstadoFeed();
+                configurarBotonFeed();
+                cargarEstadoFeedCanciones();
+                configurarBotonFeedCanciones();
+
+                document.getElementById('buscador-admin-artistas').addEventListener('input', aplicarFiltroArtistas);
+                document.getElementById('buscador-admin-productores').addEventListener('input', aplicarFiltroProductores);
+
+                document.getElementById('orden-admin-artistas').addEventListener('change', (e) => {
+                    ordenArtistas = e.target.value;
+                    aplicarFiltroArtistas();
+                });
+                document.getElementById('orden-admin-productores').addEventListener('change', (e) => {
+                    ordenProductores = e.target.value;
+                    aplicarFiltroProductores();
+                });
+
+                const btnMenu = document.getElementById('btn-menu');
+                const sidebar = document.getElementById('sidebar');
+                const btnLogout = document.getElementById('btn-logout-admin');
+
+                const navItems = {
+                    dashboard: { btn: document.getElementById('nav-dashboard'), section: document.getElementById('section-dashboard') },
+                    artistas: { btn: document.getElementById('nav-artistas'), section: document.getElementById('section-artistas') },
+                    productores: { btn: document.getElementById('nav-productores'), section: document.getElementById('section-productores') },
+                    estadisticas: { btn: document.getElementById('nav-estadisticas'), section: document.getElementById('section-estadisticas') }
+                };
+
+                const activeClasses = ['bg-indigo-600/20', 'text-indigo-400', 'border', 'border-indigo-500/30', 'font-semibold'];
+                const inactiveClasses = ['text-slate-400', 'hover:bg-slate-800/60', 'hover:text-white', 'font-medium'];
+
+                const cerrarMenuMovil = () => {
+                    if (window.innerWidth < 768) {
+                        sidebar.classList.add('-translate-x-full');
+                    }
+                };
+
+                const activarPestana = (claveSeleccionada) => {
+                    Object.keys(navItems).forEach(clave => {
+                        const item = navItems[clave];
+                        if (clave === claveSeleccionada) {
+                            item.section.classList.remove('hidden');
+                            item.btn.classList.remove(...inactiveClasses);
+                            item.btn.classList.add(...activeClasses);
+                        } else {
+                            item.section.classList.add('hidden');
+                            item.btn.classList.remove(...activeClasses);
+                            item.btn.classList.add(...inactiveClasses);
+                        }
+                    });
+                    cerrarMenuMovil();
+                };
+
+                btnMenu.addEventListener('click', () => sidebar.classList.toggle('-translate-x-full'));
+                navItems.dashboard.btn.addEventListener('click', (e) => { e.preventDefault(); activarPestana('dashboard'); });
+                navItems.artistas.btn.addEventListener('click', (e) => { e.preventDefault(); activarPestana('artistas'); });
+                navItems.productores.btn.addEventListener('click', (e) => { e.preventDefault(); activarPestana('productores'); });
+                navItems.estadisticas.btn.addEventListener('click', (e) => { e.preventDefault(); activarPestana('estadisticas'); });
+
+                if (btnLogout) {
+                    btnLogout.addEventListener('click', async () => {
+                        try {
+                            await signOut(auth);
+                            window.location.href = 'login.html';
+                        } catch (error) {
+                            console.error("Error al cerrar sesión:", error);
+                            alert("No se pudo cerrar la sesión. Inténtalo de nuevo.");
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

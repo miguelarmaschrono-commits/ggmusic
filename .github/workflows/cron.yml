@@ -1,0 +1,28 @@
+name: Actualizar Feed Diario
+
+on:
+  schedule:
+    # Se ejecuta todos los días a las 04:00 UTC (12:00 AM hora Venezuela)
+    - cron: '0 4 * * *'
+  workflow_dispatch: # Permite probarlo manualmente desde el panel de GitHub cuando quieras
+
+jobs:
+  actualizar-feed:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependencias necesarias
+        run: npm install firebase-admin
+
+      - name: Ejecutar script de actualización
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node scripts/actualizar-feed.js

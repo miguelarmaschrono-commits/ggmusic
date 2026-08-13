@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil de Artista | GGmusic</title>
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="assets/favicon/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
+    <link rel="manifest" href="assets/favicon/site.webmanifest">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/main.css">
+
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #090d16; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+    </style>
+</head>
+<body class="bg-[#090d16] text-slate-100 font-sans min-h-screen pb-20 antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- Skeleton / Cargando -->
+    <div id="cargando-perfil" class="min-h-screen flex flex-col items-center justify-center gap-4 relative overflow-hidden">
+        <div class="absolute inset-0 bg-indigo-600/5 blur-3xl rounded-full pointer-events-none"></div>
+        <div class="relative z-10 flex flex-col items-center gap-4">
+            <div class="w-14 h-14 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+            <p class="text-slate-400 text-sm font-medium tracking-wide animate-pulse">Cargando perfil del artista...</p>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-perfil" class="hidden min-h-screen flex flex-col items-center justify-center p-6 text-center">
+        <div class="bg-slate-900/80 border border-slate-800 p-8 md:p-10 rounded-3xl max-w-md backdrop-blur-xl shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-rose-500/10 rounded-full blur-2xl"></div>
+            <div class="w-16 h-16 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-2xl flex items-center justify-center mx-auto mb-5 text-2xl">
+                ⚠️
+            </div>
+            <h2 class="text-2xl font-black text-white mb-2 tracking-tight">Artista no encontrado</h2>
+            <p class="text-slate-400 text-sm mb-6 leading-relaxed">El perfil que estás buscando no existe, fue desactivado o el enlace es incorrecto.</p>
+            <a href="explorar.html" class="inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-xl transition-all shadow-lg shadow-indigo-600/20 hover:scale-[1.02] active:scale-95">
+                Volver a Explorar
+            </a>
+        </div>
+    </div>
+
+    <!-- Contenido Principal del Perfil -->
+    <div id="contenido-perfil" class="hidden">
+        
+        <!-- Top Nav Flotante -->
+        <nav class="fixed top-0 left-0 right-0 z-50 p-4 md:p-6 flex justify-between items-center bg-gradient-to-b from-black/90 via-black/40 to-transparent pointer-events-none backdrop-blur-[2px]">
+            <a href="explorar.html" class="pointer-events-auto bg-slate-900/80 hover:bg-slate-800 text-white p-3 rounded-full border border-slate-700/50 backdrop-blur-md transition-all shadow-xl hover:scale-105 active:scale-95 flex items-center justify-center group" aria-label="Volver">
+                <svg class="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+            </a>
+            <button id="btn-compartir" class="pointer-events-auto bg-slate-900/80 hover:bg-slate-800 text-white p-3 rounded-full border border-slate-700/50 backdrop-blur-md transition-all shadow-xl hover:scale-105 active:scale-95 flex items-center justify-center group" aria-label="Compartir perfil">
+                <svg class="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+            </button>
+        </nav>
+
+        <!-- HERO HEADER -->
+        <header class="relative w-full min-h-[580px] pt-24 pb-10 flex items-end overflow-hidden">
+            <div id="hero-bg" class="absolute inset-0 bg-cover bg-center bg-no-repeat filter brightness-75 scale-105"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/50 to-transparent"></div>
+
+            <div class="relative z-10 container mx-auto px-6 flex flex-col md:flex-row md:items-end gap-6 md:gap-8 max-w-6xl">
+                <img id="artista-avatar" src="" alt="Avatar" class="w-36 h-36 md:w-44 md:h-44 rounded-3xl object-cover shadow-2xl border-2 border-indigo-500/30 bg-slate-900 shrink-0 ring-4 ring-black/40">
+                
+                <div class="space-y-3 flex-1">
+                    <div id="badge-verificado" class="hidden inline-flex items-center gap-1.5 bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 font-bold text-xs px-3 py-1 rounded-full tracking-wide uppercase backdrop-blur-md">
+                        <svg class="w-4 h-4 fill-indigo-400" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        <span>Creador Verificado • GGmusic</span>
+                    </div>
+
+                    <h1 id="artista-nombre" class="text-4xl md:text-6xl font-black text-white tracking-tight leading-none drop-shadow-md">---</h1>
+
+                    <div class="flex flex-wrap items-center gap-2 pt-1">
+                        <span id="badge-genero" class="bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 px-3.5 py-1 rounded-full text-xs font-semibold backdrop-blur-md">---</span>
+                        <span id="badge-genero-sec" class="hidden bg-slate-800/80 text-slate-300 border border-slate-700/80 px-3.5 py-1 rounded-full text-xs font-semibold backdrop-blur-md">---</span>
+                        <span id="badge-zona" class="bg-slate-800/80 text-slate-300 border border-slate-700/80 px-3.5 py-1 rounded-full text-xs font-semibold backdrop-blur-md">📍 ---</span>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-4 pt-2">
+                        <button id="btn-seguir" class="px-7 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all">
+                            Seguir
+                        </button>
+                        
+                        <div class="flex items-center gap-4 bg-slate-900/60 border border-slate-800/80 backdrop-blur-md px-4 py-2 rounded-xl text-xs md:text-sm">
+                            <div class="text-slate-400">
+                                <span id="contador-seguidores" class="text-white font-extrabold text-base">0</span> <span class="text-slate-400 font-medium">Seguidores</span>
+                            </div>
+                            <div class="text-slate-700 select-none">•</div>
+                            <div class="text-slate-400">
+                                <span id="contador-temas" class="text-white font-extrabold text-base">0</span> <span class="text-slate-400 font-medium">Temas</span>
+                            </div>
+                            <div class="text-slate-700 select-none">•</div>
+                            <div class="text-slate-400 flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5 text-rose-400" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                                <span id="contador-likes-total" class="text-white font-extrabold text-base">0</span> <span class="text-slate-400 font-medium">Me gusta</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="redes-sociales" class="flex flex-wrap items-center gap-2.5 pt-2 hidden"></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- SECCIÓN BIOGRAFÍA -->
+        <section id="seccion-biografia" class="container mx-auto px-6 py-8 border-b border-slate-800/60 max-w-6xl hidden">
+            <h2 class="text-xl font-extrabold text-white mb-4 flex items-center gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block shadow-sm shadow-indigo-500"></span>
+                Sobre el artista
+            </h2>
+            
+            <div class="bg-slate-900/70 rounded-2xl p-6 md:p-8 border border-slate-800/80 shadow-xl relative overflow-hidden backdrop-blur-xl">
+                <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+                <p id="texto-biografia" class="text-slate-300 text-sm md:text-base leading-relaxed italic relative z-10 font-normal"></p>
+            </div>
+        </section>
+
+        <!-- CONTENIDO PRINCIPAL (Videografía) -->
+        <main class="container mx-auto px-6 py-10 space-y-12 max-w-6xl">
+            
+            <!-- Tema Destacado -->
+            <div class="space-y-6">
+                <h2 class="text-2xl font-black text-white flex items-center gap-3 tracking-tight">
+                    <span class="p-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-xl text-lg">🎵</span>
+                    Tema Destacado
+                </h2>
+
+                <div id="contenedor-video" class="bg-slate-900/80 rounded-3xl overflow-hidden border border-slate-800 shadow-2xl backdrop-blur-xl transition-all">
+                    <div class="relative w-full pb-[56.25%] bg-black">
+                        <iframe id="iframe-youtube" class="absolute top-0 left-0 w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    
+                    <div id="contenedor-meta-destacado" class="p-5 hidden bg-slate-900/90 border-t border-slate-800/80">
+                        <div class="flex justify-between items-center gap-4">
+                            <h3 id="titulo-destacado" class="text-lg font-bold text-white line-clamp-1 flex-1 tracking-tight"></h3>
+                            
+                            <button id="btn-like-destacado" class="btn-like flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-800/80 border border-slate-700/60 hover:border-rose-500/50 hover:bg-rose-500/10 text-slate-400 hover:text-rose-500 transition-all focus:outline-none shrink-0" data-cancion-id="">
+                                <svg class="w-5 h-5 icono-like transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                                <span class="count-likes text-xs font-extrabold">0</span>
+                            </button>
+                        </div>
+                        <div class="text-xs md:text-sm text-slate-400 mt-2 flex items-center gap-2 font-medium">
+                            <span id="genero-destacado" class="text-indigo-400 font-semibold"></span>
+                            <span id="punto-destacado" class="hidden text-slate-600">•</span>
+                            <span id="fecha-destacado"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sin-video" class="hidden bg-slate-900/60 rounded-2xl p-10 text-center border border-slate-800 text-slate-400">
+                    <p class="text-sm font-medium">Este artista aún no ha configurado un tema destacado.</p>
+                </div>
+            </div>
+
+            <!-- Más Videos -->
+            <div id="seccion-mas-videos" class="space-y-6 pt-8 border-t border-slate-800/80 hidden">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-black text-white flex items-center gap-3 tracking-tight">
+                        <span class="p-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-xl text-lg">🎶</span>
+                        Videografía Completa
+                    </h2>
+                    <span id="badge-total-temas" class="text-xs font-extrabold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full"></span>
+                </div>
+                
+                <div id="grid-mas-videos" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- JS inyectará los temas adicionales aquí -->
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Toast de Notificaciones -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 bg-indigo-600 text-white px-5 py-3.5 rounded-2xl shadow-2xl shadow-indigo-600/30 border border-indigo-400/30 text-xs font-bold transform translate-y-20 opacity-0 transition-all duration-300 backdrop-blur-md">
+        <span id="toast-mensaje">¡Enlace copiado!</span>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="js/artista.js"></script>
+</body>
+</html>

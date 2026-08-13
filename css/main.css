@@ -1,0 +1,69 @@
+/* css/main.css */
+
+/* 1. Importación de Fuente Moderna (Inter) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #0f172a;
+    color: #f8fafc;
+}
+
+/* 2. Scrollbar Personalizado (Estilo Spotify) */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #6366f1;
+}
+
+/* 3. Animaciones Neón / Glow para tarjetas */
+.glow-on-hover {
+    transition: all 0.3s ease-in-out;
+}
+
+.glow-on-hover:hover {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+}
+
+/* 4. Mantenimiento de Aspect Ratio para videos en móviles */
+.iframe-container {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* 16:9 Aspect Ratio */
+}
+
+.iframe-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+/* Indicador "hay novedades" en el nav — ver services/feedNovedades.js */
+.badge-novedad-punto {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-left: 5px;
+    margin-bottom: 2px;
+    border-radius: 9999px;
+    background-color: #f43f5e; /* rose-500, mismo tono de alerta que ya usa la UI */
+    vertical-align: middle;
+    animation: gg-pulso-novedad 1.8s ease-in-out infinite;
+}
+
+@keyframes gg-pulso-novedad {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(0.85); }
+}
