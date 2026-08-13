@@ -22,7 +22,12 @@ jobs:
       - name: Instalar dependencias necesarias
         run: npm install firebase-admin
 
-      - name: Ejecutar script de actualización
+      - name: Ejecutar script de actualización (Feed Principal)
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         run: node scripts/actualizar-feed.js
+
+      - name: Ejecutar script de actualización (Novedades)
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node scripts/actualizar-novedades.js
