@@ -53,7 +53,6 @@ function aplanarTemasDePerfil(usuario, rol) {
                 fecha: tema.fecha || '',
                 lista: tema.lista || '',
                 likesCount: tema.likesCount || 0,
-
                 // --- Campos exactos que requiere la aplicación (admin.js) ---
                 perfilId: uid,
                 perfilNombre: usuario.nombre || usuario.nombreArtistico || (rol === 'productor' ? 'Productor' : 'Artista'),
@@ -62,15 +61,6 @@ function aplanarTemasDePerfil(usuario, rol) {
                 perfilEtiqueta: rol === 'productor' ? (usuario.especialidad || '') : (usuario.genero || ''),
                 perfilVerificado: usuario.verificado === true,
                 tipoPerfil: rol,
-
-                // --- Aliases secundarios para máxima compatibilidad ---
-                autorUid: uid,
-                artistaId: uid,
-                usuarioId: uid,
-                uid: uid,
-                autorNombre: usuario.nombre || usuario.nombreArtistico || '',
-                autorRol: rol,
-                autorFoto: usuario.fotoPerfil || usuario.fotoUrl || usuario.foto || ''
             };
         })
         .filter(cancion => cancion.cancionId !== null);
