@@ -16,47 +16,110 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-async function actualizarNovedades() {
+const LIMITE_FEED_CANCIONES = 20;
+
+// Helper para ordenar por likes (desc) y fecha (desc)
+function compararCancionesPorLikesYFecha(a, b) {
+    const likesA = a.likesCount || 0;
+    const likesB = b.likesCount || 0;
+    if (likesB !== likesA) return likesB - likesA;
+    return (b.fecha || '').localeCompare(a.fecha || '');
+}
+
+// Extrae las canciones dentro del objeto/array del perfil del usuario
+function aplanarTemasDePerfil(usuario, rol) {
+    const temas = usuario.temas || usuario.canciones || [];
+    if (!Array.isArray(temas)) return [];
+    
+    return temas.map(tema => ({
+        ...tema,
+        autorNombre: usuario.nombre || usuario.nombreArtistico || '',
+        autorUid: usuario.uid,
+        autorRol: rol,
+        autorFoto: usuario.fotoPerfil || usuario.foto || ''
+    }));
+}
+
+// Obtiene todos los usuarios de un rol específico
+async function obtenerUsuariosPorRol(rol) {
+    const snapshot = await db.collection('usuarios')
+        .where('rol', '==', rol)
+        .get();
+
+    const lista = [];
+    snapshot.forEach(doc => {
+        lista.push({
+            uid: doc.id,
+            ...doc.data()
+        });
+    });
+    return lista;
+}
+
+async function ejecutarActualizaciónFeedCanciones() {
     try {
-        console.log("🔄 Iniciando actualización del Feed de Canciones...");
+        console.log("🔄 Iniciando extracción y actualización del Feed de Canciones...");
 
-        // 1. Intentar buscar por fechaCreacion
-        let snapshot = await db.collection('canciones')
-            .orderBy('fechaCreacion', 'desc')
-            .limit(20)
-            .get();
+        const [artistas, productores] = await Promise.all([
+            obtenerUsuariosPorRol('artista'),
+            obtenerUsuariosPorRol('productor')
+        ]);
 
-        let listaNovedades = [];
-        snapshot.forEach(doc => {
-            listaNovedades.push({
-                id: doc.id,
-                ...doc.data()
+        // Filtrar usuarios no suspendidos
+        const artistasActivos = artistas.filter(a => a.suspendido !== true);
+        const productoresActivos = productores.filter(p => p.suspendido !== true);
+
+        // Aplanar universo completo de canciones
+        const todasLasCanciones = [
+            ...artistasActivos.flatMap(a => aplanarTemasDePerfil(a, 'artista')),
+            ...productoresActivos.flatMap(p => aplanarTemasDePerfil(p, 'productor'))
+        ];
+
+        // 1. Top Canciones Generales
+        const topCanciones = [...todasLasCanciones]
+            .sort(compararCancionesPorLikesYFecha)
+            .slice(0, LIMITE_FEED_CANCIONES);
+
+        // 2. Recién Publicadas
+        const recienPublicadas = [...todasLasCanciones]
+            .filter(c => c.fecha)
+            .sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''))
+            .slice(0, LIMITE_FEED_CANCIONES);
+
+        // 3. Top por Rangos de Likes
+        const configuracionRangos = [
+            { id: 'rango-10-50', titulo: '🔈 En Ascenso (5 - 50 Likes)', min: 5, max: 50, limite: 5 },
+            { id: 'rango-51-200', titulo: '🔉 Populares (51 - 200 Likes)', min: 51, max: 200, limite: 8 },
+            { id: 'rango-201-500', titulo: '🔊 Hits (201 - 500 Likes)', min: 201, max: 500, limite: 10 },
+            { id: 'rango-501-1000', titulo: '📡 Leyendas (501 - 1000 Likes)', min: 501, max: 1000, limite: 15 }
+        ];
+
+        const topPorRangoLikes = {};
+
+        configuracionRangos.forEach(rango => {
+            const temasDelRango = todasLasCanciones.filter(cancion => {
+                const likes = cancion.likesCount || 0;
+                return likes >= rango.min && likes <= rango.max;
             });
+
+            if (temasDelRango.length > 0) {
+                topPorRangoLikes[rango.id] = {
+                    titulo: rango.titulo,
+                    canciones: temasDelRango.sort(compararCancionesPorLikesYFecha).slice(0, rango.limite)
+                };
+            }
         });
 
-        console.log(`📊 Canciones encontradas con 'fechaCreacion': ${listaNovedades.length}`);
-
-        // 2. Si dio 0, buscar de respaldo sin ordenar (por si el campo fecha tiene otro nombre)
-        if (listaNovedades.length === 0) {
-            console.log("⚠️ No se encontraron canciones con 'fechaCreacion'. Buscando canciones sin ordenamiento...");
-            const altSnapshot = await db.collection('canciones').limit(20).get();
-            altSnapshot.forEach(doc => {
-                listaNovedades.push({
-                    id: doc.id,
-                    ...doc.data()
-                });
-            });
-            console.log(`📊 Canciones encontradas sin filtro en 'canciones': ${listaNovedades.length}`);
-        }
-
-        // 3. Guardar en feedCanciones/actual (incluyendo 'items' y 'canciones' para evitar fallos de lectura en frontend)
-        await db.collection('feedCanciones').doc('actual').set({
-            items: listaNovedades,
-            canciones: listaNovedades,
-            actualizadoEn: admin.firestore.FieldValue.serverTimestamp()
+        // Escribir en Firestore en feedCanciones/actual
+        await db.collection("feedCanciones").doc("actual").set({
+            canciones: topCanciones,
+            recienPublicadas,
+            topPorRangoLikes,
+            actualizadoEn: admin.firestore.FieldValue.serverTimestamp(),
+            totalCancionesConsideradas: todasLasCanciones.length
         });
 
-        console.log(`✅ ¡feedCanciones/actual actualizado con éxito! (${listaNovedades.length} canciones guardadas)`);
+        console.log(`✅ ¡feedCanciones/actual actualizado con éxito! (${todasLasCanciones.length} canciones procesadas)`);
         process.exit(0);
 
     } catch (error) {
@@ -65,4 +128,4 @@ async function actualizarNovedades() {
     }
 }
 
-actualizarNovedades();
+ejecutarActualizaciónFeedCanciones();
