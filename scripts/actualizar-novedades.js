@@ -37,7 +37,7 @@ async function actualizarNovedades() {
         });
 
         // Guardar el resultado precalculado en Firestore
-        await db.collection('feedNovedades').doc('actual').set({
+        await db.collection('feedCanciones').doc('actual').set({
             items: listaNovedades,
             actualizadoEn: admin.firestore.FieldValue.serverTimestamp()
         });
