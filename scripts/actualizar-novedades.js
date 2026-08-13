@@ -26,18 +26,54 @@ function compararCancionesPorLikesYFecha(a, b) {
     return (b.fecha || '').localeCompare(a.fecha || '');
 }
 
-// Extrae las canciones dentro del objeto/array del perfil del usuario
+// Helper para extraer el ID del video de YouTube
+function extraerIdYouTube(url) {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+}
+
+// Extrae las canciones dentro del perfil del usuario asignando la misma estructura que admin.js
 function aplanarTemasDePerfil(usuario, rol) {
-    const temas = usuario.temas || usuario.canciones || [];
-    if (!Array.isArray(temas)) return [];
-    
-    return temas.map(tema => ({
-        ...tema,
-        autorNombre: usuario.nombre || usuario.nombreArtistico || '',
-        autorUid: usuario.uid,
-        autorRol: rol,
-        autorFoto: usuario.fotoPerfil || usuario.foto || ''
-    }));
+    const temas = Array.isArray(usuario.temas) ? usuario.temas : (Array.isArray(usuario.canciones) ? usuario.canciones : []);
+    const uid = usuario.uid || usuario.id;
+
+    return temas
+        .filter(tema => tema.url && tema.url.trim() !== '')
+        .map(tema => {
+            const videoId = extraerIdYouTube(tema.url);
+
+            return {
+                ...tema,
+                cancionId: videoId ? `${uid}_${videoId}` : (tema.cancionId || null),
+                nombre: tema.nombre || 'Sin título',
+                url: tema.url,
+                genero: tema.genero || '',
+                fecha: tema.fecha || '',
+                lista: tema.lista || '',
+                likesCount: tema.likesCount || 0,
+
+                // --- Campos exactos que requiere la aplicación (admin.js) ---
+                perfilId: uid,
+                perfilNombre: usuario.nombre || usuario.nombreArtistico || (rol === 'productor' ? 'Productor' : 'Artista'),
+                perfilFotoUrl: usuario.fotoPerfil || usuario.fotoUrl || usuario.foto || '',
+                perfilZona: usuario.zona || '',
+                perfilEtiqueta: rol === 'productor' ? (usuario.especialidad || '') : (usuario.genero || ''),
+                perfilVerificado: usuario.verificado === true,
+                tipoPerfil: rol,
+
+                // --- Aliases secundarios para máxima compatibilidad ---
+                autorUid: uid,
+                artistaId: uid,
+                usuarioId: uid,
+                uid: uid,
+                autorNombre: usuario.nombre || usuario.nombreArtistico || '',
+                autorRol: rol,
+                autorFoto: usuario.fotoPerfil || usuario.fotoUrl || usuario.foto || ''
+            };
+        })
+        .filter(cancion => cancion.cancionId !== null);
 }
 
 // Obtiene todos los usuarios de un rol específico
