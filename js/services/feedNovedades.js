@@ -33,7 +33,7 @@
 import { db } from '../firebase-config.js';
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-const TTL_NOVEDADES_MS = 12 * 60 * 60 * 1000; // 24 horas de caché // mismo TTL que index.js/canciones.js
+const TTL_NOVEDADES_MS = 12 * 60 * 60 * 1000; 
 
 const CLAVE_CACHE_FEED_HOME = 'ggmusic_feed_cache';                 // la mantiene index.js
 const CLAVE_CACHE_FEED_CANCIONES = 'ggmusic_feed_canciones_cache';  // la mantiene canciones.js

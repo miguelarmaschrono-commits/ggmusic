@@ -52,7 +52,7 @@ const IDS_CARRUSELES = [
 ];
 
 const CLAVE_CACHE_FEED_CANCIONES = 'ggmusic_feed_canciones_cache';
-const TTL_FEED_MS = 20 * 60 * 1000; // 20 minutos, igual que el feed de perfiles
+const TTL_FEED_MS = 12 * 60 * 60 * 1000; // 12 horas, igual que el feed de perfiles
 
 // ==========================================
 // CACHÉ LOCAL (localStorage)
