@@ -15,11 +15,48 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
-// Helper para calcular likes totales
-function calcularLikesTotal(temas) {
+// ==========================================
+// MAPPERS EXACTOS
+// ==========================================
+
+function calcularTotalLikes(temas) {
     if (!Array.isArray(temas)) return 0;
     return temas.reduce((suma, tema) => suma + (tema.likesCount || 0), 0);
 }
+
+function mapearSnapshotArtista(a) {
+    return {
+        id: a.id,
+        nombre: a.nombre || 'Artista',
+        fotoUrl: a.fotoUrl || '',
+        genero: a.genero || '',
+        generoSecundario: a.generoSecundario || '',
+        zona: a.zona || '',
+        verificado: a.verificado === true,
+        seguidoresCount: a.seguidoresCount || 0,
+        totalLikes: calcularTotalLikes(a.temas)
+    };
+}
+
+function mapearSnapshotProductor(p) {
+    return {
+        id: p.id,
+        nombre: p.nombre || 'Productor',
+        fotoUrl: p.fotoUrl || '',
+        especialidad: p.especialidad || '',
+        zona: p.zona || '',
+        verificado: p.verificado === true,
+        seguidoresCount: p.seguidoresCount || 0,
+        totalLikes: calcularTotalLikes(p.temas),
+        cantidadTrabajos: Array.isArray(p.temas) && p.temas.length > 0
+            ? p.temas.length
+            : (p.temaDestacado ? 1 : 0)
+    };
+}
+
+// ==========================================
+// PROCESAMIENTO
+// ==========================================
 
 async function procesarRol(rolNombre) {
     // 1. Obtener todos los usuarios activos con ese rol
@@ -30,11 +67,15 @@ async function procesarRol(rolNombre) {
     const lista = [];
     snapshot.forEach(doc => {
         const data = doc.data();
-        if (data.activo !== false) { // Excluir desactivados
-            lista.push({
-                uid: doc.id,
-                ...data
-            });
+        if (data.activo !== false && data.suspendido !== true) { // Excluir desactivados o suspendidos
+            const perfilConId = { id: doc.id, ...data };
+            
+            // Se aplica el mapper correspondiente según el rol
+            const snapshotMapeado = rolNombre === 'artista' 
+                ? mapearSnapshotArtista(perfilConId)
+                : mapearSnapshotProductor(perfilConId);
+
+            lista.push(snapshotMapeado);
         }
     });
 
@@ -43,7 +84,7 @@ async function procesarRol(rolNombre) {
         const segA = a.seguidoresCount || 0;
         const segB = b.seguidoresCount || 0;
         if (segB !== segA) return segB - segA;
-        return (a.nombre || '').localeCompare(b.nombre || '');
+        return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
     });
 
     // 3. Extraer Top 15
@@ -55,7 +96,7 @@ async function procesarRol(rolNombre) {
         const segA = a.seguidoresCount || 0;
         const segB = b.seguidoresCount || 0;
         if (segA !== segB) return segA - segB; // Ascendente (menos seguidores primero)
-        return (a.nombre || '').localeCompare(b.nombre || '');
+        return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
     });
     const emergentes = fueraDelTop.slice(0, 5);
 
