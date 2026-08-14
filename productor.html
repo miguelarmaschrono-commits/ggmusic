@@ -10,7 +10,8 @@
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
-    <link rel="manifest" href="assets/favicon/site.webmanifest">
+     
+    <link rel="manifest" href="manifest.json">
     
     <!-- Tailwind CSS & FontAwesome -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -198,5 +199,14 @@
     <!-- Scripts -->
     <script type="module" src="js/firebase-config.js"></script>
     <script type="module" src="js/productor.js"></script>
+    <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('Service Worker de GGmusic activo', reg.scope))
+        .catch(err => console.error('Error al registrar Service Worker:', err));
+    });
+  }
+</script>
 </body>
 </html>
