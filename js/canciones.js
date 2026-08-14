@@ -22,6 +22,16 @@
 // index.js (ggmusic_feed_cache) — el feed de canciones tampoco cambia en
 // tiempo real, solo cuando el admin lo actualiza, así que no hace falta
 // tocar Firestore en cada carga si hay una copia reciente en localStorage.
+//
+// REPRODUCTOR FLOTANTE: cada tarjeta de canción pintada por render.js
+// (construirTarjetaCancion) trae ahora un botón .btn-flotante además del
+// .btn-like ya existente. inicializarReproductorFlotante() delega en
+// services/floatingPlayer.js, que ancla el video en un widget con
+// position:fixed — así sigue sonando aunque la tarjeta salga del
+// viewport por scroll o el usuario minimice la pestaña/PWA en Android.
+// Ver ese archivo para el detalle de por qué esto NO sobrevive una
+// navegación completa a otra página del sitio (GGmusic es multi-página,
+// no SPA), solo permite retomar el mismo tema al volver.
 
 import { auth, db } from './firebase-config.js';
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -29,6 +39,7 @@ import { configurarMenuSesion } from './ui/session-nav.js';
 import { renderizarCancionesHorizontal } from './ui/render.js';
 import { toggleLikeCancion, obtenerMisLikes } from './services/interactions.js';
 import { marcarCancionesComoVisto } from './services/feedNovedades.js';
+import { reproducirEnFlotante } from './services/floatingPlayer.js';
 
 // IDs de los tres carruseles en los que se divide "Más Populares" — deben
 // coincidir con los contenedores agregados en canciones.html.
@@ -418,6 +429,35 @@ function inicializarLikes() {
 }
 
 // ==========================================
+// REPRODUCTOR FLOTANTE (ver services/floatingPlayer.js)
+// ==========================================
+// Delegación de eventos sobre <main>, igual patrón que inicializarLikes():
+// un solo listener capta los clics de CUALQUIER botón .btn-flotante,
+// incluidos los que se agregan después (carruseles de rangos de likes,
+// pintados dinámicamente en pintarFeedCanciones), sin tener que re-atar
+// listeners cada vez que se repinta el DOM.
+function inicializarReproductorFlotante() {
+    const main = document.querySelector('main');
+    if (!main) return;
+
+    main.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn-flotante');
+        if (!btn) return;
+
+        const videoId = btn.dataset.videoId;
+        if (!videoId) return;
+
+        reproducirEnFlotante({
+            videoId,
+            cancionId: btn.dataset.cancionId,
+            titulo: btn.dataset.titulo,
+            subtitulo: btn.dataset.subtitulo,
+            fotoUrl: btn.dataset.foto
+        });
+    });
+}
+
+// ==========================================
 // TOAST DE NOTIFICACIONES
 // ==========================================
 let toastTimeoutId = null;
@@ -454,6 +494,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     marcarCancionesComoVisto();
     configurarMenuSesion();
     inicializarLikes();
+    inicializarReproductorFlotante();
     inicializarControlesCarruseles();
     const cache = leerCacheFeedCanciones();
     

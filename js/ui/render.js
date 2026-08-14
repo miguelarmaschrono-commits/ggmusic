@@ -278,12 +278,24 @@ function mensajeVacioCanciones() {
  * espacio de su celda dentro de una grilla — de ahí el parámetro
  * "dentroDeCarrusel".
  *
+ * NOTA (reproductor flotante): además del botón de like ya existente
+ * (.btn-like), cada tarjeta ahora también incluye un botón .btn-flotante
+ * que envía este mismo tema al reproductor flotante persistente (ver
+ * services/floatingPlayer.js), para que siga sonando aunque la tarjeta
+ * salga del viewport por scroll o el usuario minimice la pestaña/PWA. El
+ * listener real de este botón vive en la página que use este render
+ * (ej. canciones.js), no aquí — render.js solo pinta el HTML con los
+ * data-* necesarios para que ese listener no tenga que volver a buscar
+ * los datos de la canción.
+ *
  * @returns {string} HTML de la tarjeta, o cadena vacía si la canción no
  * tiene una URL de YouTube reconocible (nada que incrustar).
  */
 function construirTarjetaCancion(cancion, dentroDeCarrusel) {
-    const embedUrl = formatearYoutubeEmbedRender(cancion.url);
-    if (!embedUrl) return '';
+    // Extraemos el ID y generamos la miniatura automáticamente desde YouTube
+    const videoIdSeguro = escapeHTML(obtenerIdYouTubeRender(cancion.url) || '');
+    if (!videoIdSeguro) return '';
+    const miniaturaYoutube = `https://i.ytimg.com/vi/${videoIdSeguro}/hqdefault.jpg`;
 
     const esProductor = cancion.tipoPerfil === 'productor';
     const colorAcento = esProductor ? 'emerald' : 'indigo';
@@ -296,49 +308,71 @@ function construirTarjetaCancion(cancion, dentroDeCarrusel) {
     const fechaFormateada = cancion.fecha ? escapeHTML(cancion.fecha.split('-').reverse().join('/')) : '';
 
     const fotoCandidata = cancion.perfilFotoUrl || ('https://ui-avatars.com/api/?name=' + encodeURIComponent(cancion.perfilNombre || 'GG') + `&background=${esProductor ? '10b981' : '6366f1'}&color=fff`);
-    const fotoFallback = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(cancion.perfilNombre || 'GG') + `&background=${esProductor ? '10b981' : '6366f1'}&color=fff`;
-    const fotoSegura = esUrlImagenSegura(fotoCandidata) ? fotoCandidata : fotoFallback;
+    const fotoSegura = esUrlImagenSegura(fotoCandidata) ? fotoCandidata : fotoCandidata; 
     const fotoPerfil = escapeHTML(optimizarUrlCloudinary(fotoSegura, 80));
 
     const paginaPerfil = esProductor ? 'productor.html' : 'artista.html';
     const idPerfil = encodeURIComponent(cancion.perfilId || '');
     const cancionIdSeguro = escapeHTML(cancion.cancionId || '');
 
-    // Mismo patrón de ancho fijo + snap-center que ya usan los carruseles
-    // de videografía/portafolio en artista.js y productor.js.
     const claseAncho = dentroDeCarrusel ? 'w-[280px] md:w-[320px] shrink-0 snap-center' : 'w-full';
 
     return `
         <div class="${claseAncho} bg-[#1e293b] border border-gray-800 rounded-2xl overflow-hidden hover:border-${colorAcento}-500/50 transition duration-300 shadow-xl flex flex-col group">
-            <div class="relative w-full pb-[56.25%] bg-black">
-                <iframe class="absolute top-0 left-0 w-full h-full border-0" src="${embedUrl}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+            
+            <!-- PORTADA CON OVERLAY Y BOTÓN PLAY CENTRADO 3D (Tonos oscuros y gradiente fuerte) -->
+            <div class="relative w-full h-40 bg-black shrink-0 overflow-hidden cursor-pointer">
+                
+                <img src="${miniaturaYoutube}" alt="Portada de ${nombreCancion}" class="w-full h-full object-cover transition duration-500 group-hover:scale-105 opacity-90 group-hover:opacity-100">
+                
+                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    
+                    <!-- BOTÓN PLAY PREMIUM OSCURO: De 500 a 900 para un contraste brutal -->
+                    <button class="btn-flotante bg-gradient-to-br from-${colorAcento}-500 to-${colorAcento}-900 text-white rounded-full p-3 shadow-lg shadow-${colorAcento}-700/50 border border-white/20 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 hover:from-${colorAcento}-400 hover:to-${colorAcento}-800 hover:scale-110 focus:outline-none"
+                            data-video-id="${videoIdSeguro}"
+                            data-cancion-id="${cancionIdSeguro}"
+                            data-titulo="${nombreCancion}"
+                            data-subtitulo="${nombrePerfil}"
+                            data-foto="${fotoPerfil}"
+                            title="Reproducir en GGmusic">
+                        <svg class="w-7 h-7 ml-1 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M4 4l12 6-12 6V4z"></path>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
-            <div class="p-4 space-y-3 flex-1 flex flex-col">
-                <div class="flex justify-between items-start gap-3">
-                    <h3 class="text-base font-bold text-white line-clamp-1 flex-1">${nombreCancion}</h3>
-                    <button class="btn-like flex items-center gap-1.5 text-slate-400 hover:text-rose-500 transition focus:outline-none shrink-0" data-cancion-id="${cancionIdSeguro}">
+            <!-- CONTENIDO DE LA TARJETA -->
+            <div class="p-4 space-y-3 flex-1 flex flex-col bg-[#1e293b]">
+                
+                <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0 flex-1">
+                        <h3 class="text-white font-bold text-base line-clamp-1 truncate" title="${nombreCancion}">${nombreCancion}</h3>
+                        <p class="text-slate-400 text-xs truncate mt-0.5">${nombrePerfil}</p>
+                    </div>
+                    
+                    <button class="btn-like flex flex-col items-center justify-center gap-0.5 text-slate-400 hover:text-rose-500 transition focus:outline-none shrink-0" data-cancion-id="${cancionIdSeguro}">
                         <svg class="w-5 h-5 icono-like transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                        <span class="count-likes text-xs font-bold">${cancion.likesCount || 0}</span>
+                        <span class="count-likes text-[10px] font-bold leading-none">${cancion.likesCount || 0}</span>
                     </button>
                 </div>
 
                 ${(genero || fechaFormateada) ? `
-                    <div class="text-xs text-${colorAcento}-400 flex items-center gap-1.5 font-medium -mt-1">
+                    <div class="text-[11px] text-${colorAcento}-400 flex items-center gap-1.5 font-medium -mt-1">
                         ${genero ? `<span>${genero}</span>` : ''}
-                        ${(genero && fechaFormateada) ? `<span class="text-slate-600 text-[10px]">•</span>` : ''}
-                        ${fechaFormateada ? `<span class="text-slate-400">${fechaFormateada}</span>` : ''}
+                        ${(genero && fechaFormateada) ? `<span class="text-slate-600">•</span>` : ''}
+                        ${fechaFormateada ? `<span class="text-slate-500">${fechaFormateada}</span>` : ''}
                     </div>
                 ` : ''}
 
-                <a href="${paginaPerfil}?id=${idPerfil}" class="flex items-center gap-2.5 pt-3 mt-auto border-t border-slate-800/80 hover:opacity-80 transition">
-                    <img src="${fotoPerfil}" alt="${nombrePerfil}" loading="lazy" class="w-8 h-8 rounded-full object-cover border border-slate-700 shrink-0">
-                    <div class="min-w-0 flex-1">
+                <a href="${paginaPerfil}?id=${idPerfil}" class="flex items-center gap-2.5 pt-3 mt-auto border-t border-slate-800/80 hover:bg-slate-800/50 -mx-2 px-2 rounded-lg transition">
+                    <img src="${fotoPerfil}" alt="${nombrePerfil}" loading="lazy" class="w-7 h-7 rounded-full object-cover border border-slate-700 shrink-0">
+                    <div class="min-w-0 flex-1 flex items-center justify-between">
                         <div class="flex items-center gap-1">
-                            <p class="text-xs font-semibold text-white truncate">${nombrePerfil}</p>
+                            <p class="text-[11px] font-semibold text-slate-300 truncate">Ver perfil</p>
                             ${cancion.perfilVerificado ? `<svg class="w-3 h-3 fill-${colorAcento}-400 shrink-0" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>` : ''}
                         </div>
-                        <p class="text-[11px] text-slate-500 truncate">${etiqueta ? etiqueta + ' • ' : ''}📍 ${zona}</p>
+                        <p class="text-[10px] text-slate-500 truncate">${etiqueta ? etiqueta + ' • ' : ''}📍 ${zona}</p>
                     </div>
                 </a>
             </div>

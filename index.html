@@ -20,8 +20,8 @@
     </style>
     <script>
   // 1. Sobrescribir las propiedades del DOM para simular que la app siempre está visible
-  Object.defineProperty(document, 'hidden', { value: false, writable: false });
-  Object.defineProperty(document, 'visibilityState', { value: 'visible', writable: false });
+   Object.defineProperty(document, 'hidden', { value: false, writable: false });
+   Object.defineProperty(document, 'visibilityState', { value: 'visible', writable: false });
 
   // 2. Detener los eventos que le avisan al iFrame de YouTube que la pantalla se minimizó
   window.addEventListener('visibilitychange', (e) => e.stopImmediatePropagation(), true);

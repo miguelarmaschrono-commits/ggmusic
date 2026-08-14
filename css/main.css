@@ -67,3 +67,7 @@ body {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.55; transform: scale(0.85); }
 }
+/* Reproductor flotante — estado minimizado (ver services/floatingPlayer.js) */
+#gg-reproductor-flotante.gg-flotante-minimizado {
+    border-radius: 9999px;
+}
