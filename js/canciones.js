@@ -39,7 +39,7 @@ import { configurarMenuSesion } from './ui/session-nav.js';
 import { renderizarCancionesHorizontal } from './ui/render.js';
 import { toggleLikeCancion, obtenerMisLikes } from './services/interactions.js';
 import { marcarCancionesComoVisto } from './services/feedNovedades.js';
-import { reproducirEnFlotante } from './services/floatingPlayer.js';
+import { reproducirEnFlotante, establecerCola } from './services/floatingPlayer.js';
 
 // IDs de los tres carruseles en los que se divide "Más Populares" — deben
 // coincidir con los contenedores agregados en canciones.html.
@@ -429,13 +429,8 @@ function inicializarLikes() {
 }
 
 // ==========================================
-// REPRODUCTOR FLOTANTE (ver services/floatingPlayer.js)
+// REPRODUCTOR FLOTANTE (en js/canciones.js)
 // ==========================================
-// Delegación de eventos sobre <main>, igual patrón que inicializarLikes():
-// un solo listener capta los clics de CUALQUIER botón .btn-flotante,
-// incluidos los que se agregan después (carruseles de rangos de likes,
-// pintados dinámicamente en pintarFeedCanciones), sin tener que re-atar
-// listeners cada vez que se repinta el DOM.
 function inicializarReproductorFlotante() {
     const main = document.querySelector('main');
     if (!main) return;
@@ -444,16 +439,84 @@ function inicializarReproductorFlotante() {
         const btn = e.target.closest('.btn-flotante');
         if (!btn) return;
 
-        const videoId = btn.dataset.videoId;
-        if (!videoId) return;
+        const cancionId = btn.dataset.cancionId;
+        let videoIdFallback = btn.dataset.videoId;
+        if (!cancionId && !videoIdFallback) return;
 
-        reproducirEnFlotante({
-            videoId,
-            cancionId: btn.dataset.cancionId,
-            titulo: btn.dataset.titulo,
-            subtitulo: btn.dataset.subtitulo,
-            fotoUrl: btn.dataset.foto
-        });
+        // Extraer ID de YouTube de fallback si el dataset solo trae la clave compuesta (ej: "USER_YOUTUBEID")
+        if (!videoIdFallback && cancionId) {
+            videoIdFallback = cancionId.includes('_') ? cancionId.split('_').pop() : cancionId;
+        }
+
+        // 1. Obtener la caché local del feed
+        const cache = leerCacheFeedCanciones();
+        let listaOrigen = [];
+
+        if (cache) {
+            // Identificar en cuál carrusel/lista se encuentra la canción seleccionada
+            if (cache.canciones && cache.canciones.some(c => (c.cancionId || c.id) === cancionId)) {
+                listaOrigen = cache.canciones;
+            } else if (cache.recienPublicadas && cache.recienPublicadas.some(c => (c.cancionId || c.id) === cancionId)) {
+                listaOrigen = cache.recienPublicadas;
+            } else if (cache.topPorRangoLikes) {
+                for (const keyId in cache.topPorRangoLikes) {
+                    const grupo = cache.topPorRangoLikes[keyId];
+                    const cancionesGrupo = Array.isArray(grupo) ? grupo : grupo?.canciones;
+                    if (cancionesGrupo?.some(c => (c.cancionId || c.id) === cancionId)) {
+                        listaOrigen = cancionesGrupo;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 2. Si se encontró la lista en la caché, normalizar los objetos para la cola del reproductor
+        if (listaOrigen.length > 0) {
+            const colaNormalizada = listaOrigen.map(item => {
+                // Intentar extraer el ID de YouTube directo
+                let ytId = item.videoId || item.youtubeId;
+
+                // Si no existe, extraerlo del ID compuesto (ej: "USERID_YOUTUBEID")
+                if (!ytId) {
+                    const rawId = item.cancionId || item.id;
+                    if (rawId && typeof rawId === 'string') {
+                        ytId = rawId.includes('_') ? rawId.split('_').pop() : rawId;
+                    }
+                }
+
+                // Si aún no se encuentra, buscar en las URLs
+                if (!ytId && (item.URL || item.url)) {
+                    const urlStr = item.URL || item.url;
+                    const match = urlStr.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+                    ytId = match ? match[1] : null;
+                }
+
+                return {
+                    videoId: ytId || videoIdFallback,
+                    cancionId: item.cancionId || item.id,
+                    titulo: item.nombre || item.titulo || btn.dataset.titulo || 'Sin título',
+                    subtitulo: item.perfilNombre || item.perfilEtiqueta || item.artista || item.nombreArtista || btn.dataset.subtitulo || 'Artista',
+                    fotoUrl: item.perfilFotoUrl || item.portada || item.imagen || item.fotoUrl || btn.dataset.foto || ''
+                };
+            });
+
+            const indice = colaNormalizada.findIndex(item => (item.cancionId || item.id) === cancionId);
+            const indiceValido = indice >= 0 ? indice : 0;
+
+            // Enviar la lista completa como cola y reproducir el tema seleccionado
+            establecerCola(colaNormalizada, indiceValido);
+            reproducirEnFlotante(colaNormalizada[indiceValido]);
+
+        } else {
+            // Fallback defensivo usando los atributos 'dataset' del botón presionado
+            reproducirEnFlotante({
+                videoId: videoIdFallback,
+                cancionId: cancionId,
+                titulo: btn.dataset.titulo,
+                subtitulo: btn.dataset.subtitulo,
+                fotoUrl: btn.dataset.foto
+            });
+        }
     });
 }
 

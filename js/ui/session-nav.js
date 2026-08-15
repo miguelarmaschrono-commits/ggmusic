@@ -51,6 +51,7 @@ import { auth, db } from '../firebase-config.js';
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { obtenerEstadoNovedades } from '../services/feedNovedades.js';
+import { reanudarReproduccionAutomatica } from '../services/floatingPlayer.js';
 // ==========================================
 // PINTADO OPTIMISTA (CACHÉ LOCAL)
 // ==========================================
@@ -238,6 +239,7 @@ export function configurarMenuSesion() {
     // sesión, así que no bloquea ni interfiere con el pintado optimista
     // de arriba.
     aplicarIndicadoresDeNovedades();
+    reanudarReproduccionAutomatica();
 
     async function cerrarSesion() {
         guardarCacheSesion(null); // así la próxima carga no arrastra el estado viejo
