@@ -133,7 +133,7 @@ export function obtenerEstadoGuardado() {
 }
 
 // ==========================================
-// 3. CONSTRUCCIÓN DEL WIDGET (DISEÑO SOBRIO)
+// 3. CONSTRUCCIÓN DEL WIDGET (BORDES SUAVES Y CONTENEDOR 16:9)
 // ==========================================
 function construirWidgetSiHaceFalta() {
     if (contenedorFlotante) return;
@@ -141,8 +141,8 @@ function construirWidgetSiHaceFalta() {
     contenedorFlotante = document.createElement('div');
     contenedorFlotante.id = 'gg-reproductor-flotante';
     contenedorFlotante.className = [
-        'fixed z-[70] bottom-4 right-4 w-[320px] bg-slate-900/95 border border-slate-700/80',
-        'rounded-md shadow-2xl backdrop-blur-xl overflow-hidden transition-all duration-300',
+        'fixed z-[70] bottom-4 right-4 w-[300.5px] bg-slate-900/95 border border-slate-700/80',
+        'rounded-xl shadow-2xl backdrop-blur-xl overflow-hidden transition-all duration-300',
         'select-none flex flex-col justify-between'
     ].join(' ');
     
@@ -150,8 +150,8 @@ function construirWidgetSiHaceFalta() {
 
     contenedorFlotante.innerHTML = `
         <!-- CABECERA Y DATOS DE CANCIÓN -->
-        <div id="gg-flotante-header" class="relative flex items-center justify-between gap-2 px-3 py-2 bg-slate-950/80 border-b border-slate-800 cursor-grab active:cursor-grabbing shrink-0 transition-all">
-            <div id="gg-flotante-info" class="flex items-center gap-2.5 min-w-0 flex-1 transition-all">
+        <div id="gg-flotante-header" class="flex items-center justify-between gap-2 px-3 py-2 bg-slate-950/80 border-b border-slate-800 cursor-grab active:cursor-grabbing shrink-0 transition-all">
+            <div id="gg-flotante-info" class="flex items-center gap-2.5 min-w-0 flex-1">
                 <img id="gg-flotante-foto" src="" alt="" class="w-8 h-8 rounded-sm object-cover border border-slate-700 shrink-0 bg-slate-800 shadow-sm transition-all duration-200">
                 <div class="min-w-0 flex-1">
                     <p id="gg-flotante-titulo" class="text-xs font-bold text-white truncate leading-tight">—</p>
@@ -175,7 +175,7 @@ function construirWidgetSiHaceFalta() {
             <div id="gg-flotante-video-target" class="absolute inset-0"></div>
         </div>
 
-        <!-- BARRA DE CONTROLES MULTIMEDIA (Botón de pausa sobrio) -->
+        <!-- BARRA DE CONTROLES MULTIMEDIA -->
         <div id="gg-flotante-controls-bar" class="flex items-center justify-center gap-4 px-3 py-2 bg-slate-950/90 border-t border-slate-800/80 shrink-0">
             <button id="gg-flotante-prev" type="button" title="Anterior" class="text-slate-400 hover:text-white p-1.5 rounded-full hover:bg-slate-800 transition active:scale-95">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">${SVG_PREV}</svg>
@@ -223,16 +223,16 @@ function construirWidgetSiHaceFalta() {
 }
 
 // ==========================================
-// 4. MINIMIZAR / RESTAURAR
+// 4. MINIMIZAR / RESTAURAR (MODO HORIZONTAL 16:9)
 // ==========================================
 function alternarMinimizado() {
     if (!contenedorFlotante) return;
 
     const minimizado = contenedorFlotante.classList.toggle('gg-flotante-minimizado');
 
-    // Cambiar ancho manteniendo una tarjeta compacta rectangular de bordes suaves (rounded-xl)
-    contenedorFlotante.classList.toggle('w-[70px]', !minimizado);
-    contenedorFlotante.classList.toggle('w-[300px]', minimizado);
+    // Dimensiones en relación de aspecto 16:9 (280px x 158px)
+    contenedorFlotante.classList.toggle('w-[300px]', !minimizado);
+    contenedorFlotante.classList.toggle('w-[280px]', minimizado);
     contenedorFlotante.classList.toggle('h-[100px]', minimizado);
 
     // Ocultar iframe de video

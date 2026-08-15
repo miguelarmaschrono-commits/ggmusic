@@ -71,3 +71,6 @@ body {
 #gg-reproductor-flotante.gg-flotante-minimizado {
     border-radius: 9999px;
 }
+#gg-reproductor-flotante.gg-flotante-minimizado {
+    border-radius: 15px !important; /* Esquinas rectas con curvatura ligera de 6px */
+}
