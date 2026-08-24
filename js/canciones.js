@@ -1,60 +1,24 @@
 // ==========================================
 // CANCIONES.JS - Feed público de canciones (canciones.html)
 // ==========================================
-// Mismo espíritu que index.js para el feed de perfiles: canciones.html NO
-// dispara ninguna consulta pesada a "usuarios" en cada visita. Se lee UN
-// solo documento (feedCanciones/actual) que el admin recalcula
-// manualmente desde admin.html (botón "Actualizar Feed de Canciones", ver
-// services/adminDb.js: actualizarFeedCanciones()). El snapshot ya viene
-// aplanado (cada tema con los datos de su perfil dueño denormalizados) y
-// ordenado en dos listas: "canciones" (por me gusta) y "recienPublicadas"
-// (por fecha).
-//
-// "MÁS POPULARES" EN TRES BLOQUES DE 10: el snapshot trae hasta 30
-// canciones ordenadas por popularidad (LIMITE_FEED_CANCIONES en
-// adminDb.js). En vez de una sola grilla larga, se corta en tres tramos
-// de 10 (Top 1-10 / 11-20 / 21-30), cada uno pintado como su propio
-// carrusel horizontal con scroll-snap — mismo patrón visual que ya usa
-// index.js para el Top 15 de artistas/productores (oro/plata/bronce).
-//
-// CAPA DE CACHÉ LOCAL: igual patrón "pintado optimista + revalidación en
-// segundo plano" que ya usan session-nav.js (ggmusic_sesion_cache) e
-// index.js (ggmusic_feed_cache) — el feed de canciones tampoco cambia en
-// tiempo real, solo cuando el admin lo actualiza, así que no hace falta
-// tocar Firestore en cada carga si hay una copia reciente en localStorage.
-//
-// REPRODUCTOR FLOTANTE: cada tarjeta de canción pintada por render.js
-// (construirTarjetaCancion) trae ahora un botón .btn-flotante además del
-// .btn-like ya existente. inicializarReproductorFlotante() delega en
-// services/floatingPlayer.js, que ancla el video en un widget con
-// position:fixed — así sigue sonando aunque la tarjeta salga del
-// viewport por scroll o el usuario minimice la pestaña/PWA en Android.
-// Ver ese archivo para el detalle de por qué esto NO sobrevive una
-// navegación completa a otra página del sitio (GGmusic es multi-página,
-// no SPA), solo permite retomar el mismo tema al volver.
 
-import { auth, db } from './firebase-config.js';
+import { db } from './firebase-config.js';
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { configurarMenuSesion } from './ui/session-nav.js';
-import { renderizarCancionesHorizontal } from './ui/render.js';
-import { toggleLikeCancion, obtenerMisLikes } from './services/interactions.js';
+import { renderizarCancionesHorizontal, alRenderizarTarjetaDiferida } from './ui/render.js';
+import { inicializarLikesEnTarjetas, tieneLikeLocal, aplicarEstadoDeLikesEnDOM } from './services/interactions.js';
 import { marcarCancionesComoVisto } from './services/feedNovedades.js';
 import { reproducirEnFlotante, establecerCola } from './services/floatingPlayer.js';
 
-// IDs de los tres carruseles en los que se divide "Más Populares" — deben
-// coincidir con los contenedores agregados en canciones.html.
+// IDs de los tres carruseles en los que se divide "Más Populares"
 const IDS_POPULARES = {
     top1: 'gridCancionesPopulares1', // Puestos 1 - 10
     top2: 'gridCancionesPopulares2', // Puestos 11 - 20
     top3: 'gridCancionesPopulares3'  // Puestos 21 - 30
 };
 
-// CORRECCIÓN APLICADA: Declaración de la constante para "Recién Publicado"
 const ID_GRID_RECIENTES = 'gridCancionesRecientes';
 
-// IDs de TODOS los carruseles de la página (3 de "Más Populares" + el
-// de "Recién Publicado"). Centraliza la inicialización/actualización
-// de flechas y degradado sin repetir la lógica 4 veces.
 const IDS_CARRUSELES = [
     IDS_POPULARES.top1,
     IDS_POPULARES.top2,
@@ -63,7 +27,7 @@ const IDS_CARRUSELES = [
 ];
 
 const CLAVE_CACHE_FEED_CANCIONES = 'ggmusic_feed_canciones_cache';
-const TTL_FEED_MS = 12 * 60 * 60 * 1000; // 12 horas, igual que el feed de perfiles
+const TTL_FEED_MS = 12 * 60 * 60 * 1000; // 12 horas
 
 // ==========================================
 // CACHÉ LOCAL (localStorage)
@@ -94,8 +58,7 @@ function guardarCacheFeedCanciones({ canciones, recienPublicadas, topPorRangoLik
             guardadoEn: Date.now()
         }));
     } catch (error) {
-        // localStorage puede fallar (navegación privada, cuota, etc.) — sin
-        // pintado optimista en ese caso, pero sin romper nada.
+        // Ignorar fallos de cuota/navegación privada
     }
 }
 
@@ -108,6 +71,7 @@ function borrarCacheFeedCanciones() {
 // ==========================================
 // INDICADOR DE FRESCURA ("hace X días")
 // ==========================================
+
 function formatearTiempoRelativo(actualizadoEnMs) {
     if (!actualizadoEnMs || typeof actualizadoEnMs !== 'number') return null;
 
@@ -160,8 +124,9 @@ function pintarBloquePopulares(sublista, contenedorId) {
 }
 
 // ==========================================
-// CONTROLES DE CARRUSEL (flechas + degradado móvil)
+// CONTROLES DE CARRUSEL
 // ==========================================
+
 function configurarCarrusel(contenedorId) {
     const contenedor = document.getElementById(contenedorId);
     if (!contenedor) return;
@@ -255,7 +220,6 @@ function pintarFeedCanciones(canciones, recienPublicadas, topPorRangoLikes, fech
 
     renderizarCancionesHorizontal(recienPublicadas, ID_GRID_RECIENTES);
 
-    // --- NUEVO: Renderizar Top por Rangos de Likes ---
     const contenedorGeneros = document.getElementById('contenedor-generos');
     if (contenedorGeneros) {
         contenedorGeneros.innerHTML = '';
@@ -269,7 +233,7 @@ function pintarFeedCanciones(canciones, recienPublicadas, topPorRangoLikes, fech
                 
                 const seccionHTML = `
                     <div class="space-y-3">
-                        <h3 class="text-sm font-bold text-fuchsia-400 uppercase tracking-wide">${grupo.titulo}</h3>
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wide">${grupo.titulo}</h3>
                         <div class="carousel-wrapper">
                             <div id="${idContenedor}" class="flex overflow-x-auto gap-6 pb-6 snap-x scrollbar-thin scrollbar-thumb-slate-700"></div>
                             <button type="button" class="carousel-arrow carousel-arrow-prev hidden" aria-label="Ver canciones anteriores">
@@ -306,7 +270,28 @@ function pintarFeedCanciones(canciones, recienPublicadas, topPorRangoLikes, fech
         }
     }
 
-    aplicarEstadoDeLikesSiHaySesion();
+    // Consolidar canciones para la búsqueda local
+    const mapaCanciones = new Map();
+    const agregarLista = (lista) => {
+        if (Array.isArray(lista)) {
+            lista.forEach(item => {
+                const id = item.cancionId || item.id || item.videoId;
+                if (id && !mapaCanciones.has(id)) mapaCanciones.set(id, item);
+            });
+        }
+    };
+
+    agregarLista(canciones);
+    agregarLista(recienPublicadas);
+    if (topPorRangoLikes) {
+        Object.values(topPorRangoLikes).forEach(grupo => {
+            agregarLista(Array.isArray(grupo) ? grupo : grupo?.canciones);
+        });
+    }
+
+    inicializarBuscador(Array.from(mapaCanciones.values()));
+
+    aplicarEstadoDeLikesEnDOM();
     actualizarTodosLosCarruseles();
 }
 
@@ -345,92 +330,22 @@ async function cargarFeedCancionesDesdeFirestore(yaHabiaPintadoOptimista) {
 }
 
 // ==========================================
-// LIKES (se resuelven aparte del pintado, tras conocer la sesión)
+// LIKES
 // ==========================================
-let misLikesConocidos = null;
-
-function marcarBotonLike(btn, liked) {
-    const icono = btn.querySelector('.icono-like');
-    if (!icono) return;
-    if (liked) {
-        icono.classList.add('text-rose-500', 'fill-current');
-        icono.classList.remove('text-slate-400');
-    } else {
-        icono.classList.remove('text-rose-500', 'fill-current');
-        icono.classList.add('text-slate-400');
-    }
-}
-
-function aplicarEstadoDeLikesSiHaySesion() {
-    if (!Array.isArray(misLikesConocidos)) return;
-    document.querySelectorAll('.btn-like').forEach(btn => {
-        const cancionId = btn.dataset.cancionId;
-        if (cancionId && misLikesConocidos.includes(cancionId)) {
-            marcarBotonLike(btn, true);
-        }
-    });
-}
-
-function inicializarLikes() {
-    if (!auth) return;
-
-    auth.onAuthStateChanged(async (user) => {
-        if (!user) {
-            misLikesConocidos = null;
-            return;
-        }
-        try {
-            misLikesConocidos = await obtenerMisLikes(user.uid);
-            aplicarEstadoDeLikesSiHaySesion();
-        } catch (error) {
-            console.error("Error al cargar mis likes:", error);
-        }
-    });
-
-    const main = document.querySelector('main');
-    if (!main) return;
-
-    main.addEventListener('click', async (e) => {
-        const btnLike = e.target.closest('.btn-like');
-        if (!btnLike) return;
-
-        const user = auth.currentUser;
-        if (!user) return mostrarToast("Debes iniciar sesión para dar me gusta.", 'warn');
-
-        const cancionId = btnLike.dataset.cancionId;
-        if (!cancionId) return;
-
-        try {
-            btnLike.disabled = true;
-            const res = await toggleLikeCancion(user.uid, cancionId);
-
-            if (res && res.exito) {
-                marcarBotonLike(btnLike, res.liked);
-                const contadorLike = btnLike.querySelector('.count-likes');
-                if (contadorLike) {
-                    const actual = parseInt(contadorLike.textContent) || 0;
-                    contadorLike.textContent = res.liked ? actual + 1 : Math.max(0, actual - 1);
-                }
-                if (Array.isArray(misLikesConocidos)) {
-                    misLikesConocidos = res.liked
-                        ? [...misLikesConocidos, cancionId]
-                        : misLikesConocidos.filter(id => id !== cancionId);
-                }
-            } else {
-                mostrarToast(res?.mensaje || "No se pudo procesar el like.", 'error');
-            }
-        } catch (error) {
-            console.error("Error al ejecutar toggleLikeCancion:", error);
-            mostrarToast("Ocurrió un error al procesar el like.", 'error');
-        } finally {
-            btnLike.disabled = false;
-        }
-    });
-}
+// Toda la lógica de "me gusta" (detectar cuáles ya likeó el usuario,
+// procesar el clic, sincronizar contadores en todas las tarjetas
+// repetidas y en el reproductor flotante) vive centralizada en
+// services/interactions.js -> inicializarLikesEnTarjetas(). Esta página
+// solo la invoca una vez al arrancar (ver DOMContentLoaded más abajo) y
+// vuelve a pintar el estado conocido cada vez que renderiza tarjetas
+// nuevas (aplicarEstadoDeLikesEnDOM(), llamado al final de
+// pintarFeedCanciones()). Ya no se registra ningún listener de clic
+// propio para '.btn-like' aquí — hacerlo duplicaría el toggle por clic.
 
 // ==========================================
-// REPRODUCTOR FLOTANTE (en js/canciones.js)
+// REPRODUCTOR FLOTANTE
 // ==========================================
+
 function inicializarReproductorFlotante() {
     const main = document.querySelector('main');
     if (!main) return;
@@ -443,17 +358,14 @@ function inicializarReproductorFlotante() {
         let videoIdFallback = btn.dataset.videoId;
         if (!cancionId && !videoIdFallback) return;
 
-        // Extraer ID de YouTube de fallback si el dataset solo trae la clave compuesta (ej: "USER_YOUTUBEID")
         if (!videoIdFallback && cancionId) {
             videoIdFallback = cancionId.includes('_') ? cancionId.split('_').pop() : cancionId;
         }
 
-        // 1. Obtener la caché local del feed
         const cache = leerCacheFeedCanciones();
         let listaOrigen = [];
 
         if (cache) {
-            // Identificar en cuál carrusel/lista se encuentra la canción seleccionada
             if (cache.canciones && cache.canciones.some(c => (c.cancionId || c.id) === cancionId)) {
                 listaOrigen = cache.canciones;
             } else if (cache.recienPublicadas && cache.recienPublicadas.some(c => (c.cancionId || c.id) === cancionId)) {
@@ -470,51 +382,43 @@ function inicializarReproductorFlotante() {
             }
         }
 
-        // 2. Si se encontró la lista en la caché, normalizar los objetos para la cola del reproductor
         if (listaOrigen.length > 0) {
             const colaNormalizada = listaOrigen.map(item => {
-                // Intentar extraer el ID de YouTube directo
-                let ytId = item.videoId || item.youtubeId;
-
-                // Si no existe, extraerlo del ID compuesto (ej: "USERID_YOUTUBEID")
-                if (!ytId) {
-                    const rawId = item.cancionId || item.id;
-                    if (rawId && typeof rawId === 'string') {
-                        ytId = rawId.includes('_') ? rawId.split('_').pop() : rawId;
-                    }
-                }
-
-                // Si aún no se encuentra, buscar en las URLs
-                if (!ytId && (item.URL || item.url)) {
-                    const urlStr = item.URL || item.url;
-                    const match = urlStr.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
-                    ytId = match ? match[1] : null;
-                }
+                const idActual = item.cancionId || item.id;
+                const ytId = item.videoId || item.ytId || (idActual && idActual.includes('_') ? idActual.split('_').pop() : idActual);
+                const esLiked = tieneLikeLocal(idActual);
 
                 return {
                     videoId: ytId || videoIdFallback,
-                    cancionId: item.cancionId || item.id,
+                    cancionId: idActual,
+                    perfilId: item.perfilId || item.usuarioId || item.idUsuario || item.artistaId || btn.dataset.perfilId || null,
+                    paginaPerfil: item.paginaPerfil || btn.dataset.paginaPerfil || null,
                     titulo: item.nombre || item.titulo || btn.dataset.titulo || 'Sin título',
                     subtitulo: item.perfilNombre || item.perfilEtiqueta || item.artista || item.nombreArtista || btn.dataset.subtitulo || 'Artista',
-                    fotoUrl: item.perfilFotoUrl || item.portada || item.imagen || item.fotoUrl || btn.dataset.foto || ''
+                    fotoUrl: item.perfilFotoUrl || item.portada || item.imagen || item.fotoUrl || btn.dataset.foto || '',
+                    likesCount: typeof item.likesCount === 'number' ? item.likesCount : (parseInt(btn.dataset.likes, 10) || 0),
+                    meGusta: esLiked
                 };
             });
 
-            const indice = colaNormalizada.findIndex(item => (item.cancionId || item.id) === cancionId);
+            const indice = colaNormalizada.findIndex(item => item.cancionId === cancionId);
             const indiceValido = indice >= 0 ? indice : 0;
 
-            // Enviar la lista completa como cola y reproducir el tema seleccionado
             establecerCola(colaNormalizada, indiceValido);
             reproducirEnFlotante(colaNormalizada[indiceValido]);
 
         } else {
-            // Fallback defensivo usando los atributos 'dataset' del botón presionado
+            const esLiked = tieneLikeLocal(cancionId);
             reproducirEnFlotante({
                 videoId: videoIdFallback,
                 cancionId: cancionId,
+                perfilId: btn.dataset.perfilId || null,
+                paginaPerfil: btn.dataset.paginaPerfil || null,
                 titulo: btn.dataset.titulo,
                 subtitulo: btn.dataset.subtitulo,
-                fotoUrl: btn.dataset.foto
+                fotoUrl: btn.dataset.foto,
+                likesCount: parseInt(btn.dataset.likes, 10) || 0,
+                meGusta: esLiked
             });
         }
     });
@@ -523,6 +427,7 @@ function inicializarReproductorFlotante() {
 // ==========================================
 // TOAST DE NOTIFICACIONES
 // ==========================================
+
 let toastTimeoutId = null;
 
 function mostrarToast(mensaje, tipo = 'info') {
@@ -532,21 +437,142 @@ function mostrarToast(mensaje, tipo = 'info') {
 
     const estilosPorTipo = {
         info:  { clase: 'bg-rose-600',  icono: '' },
-        warn:  { clase: 'bg-amber-500', icono: '⚠️ ' },
-        error: { clase: 'bg-red-600',   icono: '⚠️ ' }
+        warn:  { clase: 'bg-[#8d001c]', icono: '🔔 ' },
+        error: { clase: 'bg-[#DC143C]', icono: '🔔 ' }
     };
     const { clase, icono } = estilosPorTipo[tipo] || estilosPorTipo.info;
 
-    toast.classList.remove('bg-rose-600', 'bg-amber-500', 'bg-red-600');
+    toast.classList.remove('bg-rose-600', 'bg-amber-500', 'bg-red-600', 'bg-[#DC143C]');
     toast.classList.add(clase);
+    
     toastMensaje.textContent = `${icono}${mensaje}`;
 
-    toast.classList.remove('translate-y-20', 'opacity-0');
+    toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+    toast.classList.add('translate-y-0', 'opacity-100');
 
     clearTimeout(toastTimeoutId);
     toastTimeoutId = setTimeout(() => {
-        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
     }, 2500);
+}
+
+// ==========================================
+// BUSCADOR Y FILTROS
+// ==========================================
+
+const estadoFiltros = {
+    texto: '',
+    zona: 'Todas',
+    genero: 'Todos',
+    verificado: 'Todos'
+};
+
+function inicializarBuscador(todasLasCanciones) {
+    const inputBuscador = document.getElementById('inputBuscador');
+    if (!inputBuscador || inputBuscador._listenerCargado) return;
+    inputBuscador._listenerCargado = true;
+
+    inputBuscador.addEventListener('input', (e) => {
+        estadoFiltros.texto = e.target.value.toLowerCase().trim();
+        ejecutarFiltradoCombinado(todasLasCanciones);
+    });
+
+    document.querySelectorAll('.dropdown-filtro').forEach(container => {
+        const btn = container.querySelector('.btn-dropdown');
+        const lista = container.querySelector('.lista-opciones');
+        const label = container.querySelector('.label-selected');
+        const id = container.id;
+
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            document.querySelectorAll('.lista-opciones').forEach(l => {
+                if (l !== lista) l.classList.add('hidden');
+            });
+            lista.classList.toggle('hidden');
+        });
+
+        lista.querySelectorAll('li').forEach(item => {
+            item.addEventListener('click', () => {
+                const valor = item.dataset.value;
+                label.textContent = item.textContent.trim();
+                lista.classList.add('hidden');
+
+                if (id === 'dropdownZona') estadoFiltros.zona = valor;
+                if (id === 'dropdownGenero') estadoFiltros.genero = valor;
+                if (id === 'dropdownVerificado') estadoFiltros.verificado = valor;
+
+                ejecutarFiltradoCombinado(todasLasCanciones);
+            });
+        });
+    });
+
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.lista-opciones').forEach(l => l.classList.add('hidden'));
+    });
+}
+
+function ejecutarFiltradoCombinado(todasLasCanciones) {
+    const { texto, zona, genero, verificado } = estadoFiltros;
+    const sinFiltros = !texto && zona === 'Todas' && genero === 'Todos' && verificado === 'Todos';
+
+    if (sinFiltros) {
+        restaurarSeccionesOriginales();
+        const cache = leerCacheFeedCanciones();
+        if (cache) {
+            pintarFeedCanciones(cache.canciones, cache.recienPublicadas, cache.topPorRangoLikes, cache.fechaTexto, cache.actualizadoEnMs);
+        }
+        return;
+    }
+
+    const coincidencias = todasLasCanciones.filter(c => {
+        const titulo = (c.nombre || c.titulo || '').toLowerCase();
+        const artista = (c.perfilNombre || c.subtitulo || c.artista || '').toLowerCase();
+        const coincideTexto = !texto || titulo.includes(texto) || artista.includes(texto);
+
+        const zonaCancion = c.zona || c.perfilZona || c.ubicacion || '';
+        const coincideZona = zona === 'Todas' || zonaCancion.toLowerCase() === zona.toLowerCase();
+
+        const generoCancion = c.genero || '';
+        const coincideGenero = genero === 'Todos' || generoCancion.toLowerCase().includes(genero.toLowerCase());
+
+        const esVerificado = c.verificado === true || c.perfilVerificado === true;
+        let coincideVerificacion = true;
+        if (verificado === 'Verificado') coincideVerificacion = esVerificado;
+        if (verificado === 'No Verificado') coincideVerificacion = !esVerificado;
+
+        return coincideTexto && coincideZona && coincideGenero && coincideVerificacion;
+    });
+
+    pintarResultadosBusqueda(coincidencias);
+}
+
+function pintarResultadosBusqueda(canciones) {
+    document.getElementById('gridCancionesPopulares2')?.closest('.space-y-3')?.classList.add('hidden');
+    document.getElementById('gridCancionesPopulares3')?.closest('.space-y-3')?.classList.add('hidden');
+    document.getElementById('gridCancionesRecientes')?.closest('.space-y-4')?.classList.add('hidden');
+    document.getElementById('contenedor-generos')?.classList.add('hidden');
+
+    const contenedor = document.getElementById('gridCancionesPopulares1');
+    if (!contenedor) return;
+
+    if (canciones.length === 0) {
+        contenedor.innerHTML = `
+            <div class="col-span-full py-12 text-center text-slate-400">
+                <p class="text-base font-semibold">No se encontraron resultados</p>
+                <p class="text-xs text-slate-500 mt-1">Intenta ajustar o limpiar tus filtros de búsqueda.</p>
+            </div>`;
+    } else {
+        renderizarCancionesHorizontal(canciones, 'gridCancionesPopulares1');
+    }
+    actualizarTodosLosCarruseles();
+}
+
+function restaurarSeccionesOriginales() {
+    document.getElementById('gridCancionesPopulares2')?.closest('.space-y-3')?.classList.remove('hidden');
+    document.getElementById('gridCancionesPopulares3')?.closest('.space-y-3')?.classList.remove('hidden');
+    document.getElementById('gridCancionesRecientes')?.closest('.space-y-4')?.classList.remove('hidden');
+    document.getElementById('contenedor-generos')?.classList.remove('hidden');
 }
 
 // ==========================================
@@ -556,11 +582,17 @@ function mostrarToast(mensaje, tipo = 'info') {
 document.addEventListener('DOMContentLoaded', async () => {
     marcarCancionesComoVisto();
     configurarMenuSesion();
-    inicializarLikes();
+    inicializarLikesEnTarjetas();
     inicializarReproductorFlotante();
     inicializarControlesCarruseles();
-    const cache = leerCacheFeedCanciones();
+
+    // Cada vez que una tarjeta pasa de placeholder a tarjeta real (al
+    // acercarse a la pantalla), reaplicamos el estado de "me gusta" ya
+    // conocido — aplicarEstadoDeLikesEnDOM() solo alcanza al DOM que
+    // existe en el momento en que se llama.
+    alRenderizarTarjetaDiferida(() => aplicarEstadoDeLikesEnDOM());
     
+    const cache = leerCacheFeedCanciones();
     if (cache) {
         pintarFeedCanciones(cache.canciones, cache.recienPublicadas, cache.topPorRangoLikes, cache.fechaTexto, cache.actualizadoEnMs);
 

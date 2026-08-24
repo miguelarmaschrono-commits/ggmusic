@@ -3,7 +3,8 @@
 // ==========================================
 import { auth } from './firebase-config.js';
 import { obtenerPerfilArtista } from './services/db.js';
-import { toggleSeguirArtista, esSeguidor, toggleLikeCancion, obtenerMisLikes } from './services/interactions.js'; 
+import { toggleSeguirArtista, esSeguidor, inicializarLikesEnTarjetas, aplicarEstadoDeLikesEnDOM, tieneLikeLocal } from './services/interactions.js'; 
+import { reproducirEnFlotante, establecerCola, reanudarReproduccionAutomatica } from './services/floatingPlayer.js';
 
 const cargando = document.getElementById('cargando-perfil');
 const errorDiv = document.getElementById('error-perfil');
@@ -95,15 +96,27 @@ async function cargarPerfil() {
         // 4. Tema Destacado
         const embedUrl = formatearYoutubeUrl(data.temaDestacado);
         if (embedUrl) {
-            document.getElementById('iframe-youtube').src = embedUrl;
             const videoId = obtenerIdYouTube(data.temaDestacado);
             const cancionIdDestacada = `${artistaId}_${videoId}`;
             document.getElementById('btn-like-destacado').dataset.cancionId = cancionIdDestacada;
+
+            const btnDestacado = document.getElementById('btn-flotante-destacado');
+            document.getElementById('miniatura-destacado').src = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+            btnDestacado.dataset.cancionId = cancionIdDestacada;
+            btnDestacado.dataset.videoId = videoId;
+            btnDestacado.dataset.perfilId = artistaId;
+            btnDestacado.dataset.paginaPerfil = 'artista.html';
+            btnDestacado.dataset.subtitulo = data.nombre || 'Artista';
+            btnDestacado.dataset.foto = avatarUrl;
+            btnDestacado.dataset.titulo = 'Tema Destacado';
+            btnDestacado.dataset.likes = 0;
 
             if (data.temas && data.temas.length > 0) {
                 const temaEncontrado = data.temas.find(t => formatearYoutubeUrl(t.url) === embedUrl);
                 if (temaEncontrado) {
                     document.getElementById('titulo-destacado').textContent = temaEncontrado.nombre || 'Tema sin título';
+                    btnDestacado.dataset.titulo = temaEncontrado.nombre || 'Tema sin título';
+                    btnDestacado.dataset.likes = temaEncontrado.likesCount || 0;
 
                     const spanLikesDestacado = document.querySelector('#btn-like-destacado .count-likes');
                     if (spanLikesDestacado) spanLikesDestacado.textContent = temaEncontrado.likesCount || 0;
@@ -180,12 +193,18 @@ async function cargarPerfil() {
                                 const cancionCardId = `${artistaId}_${vId}`;
                                 const fechaFormateada = tema.fecha ? tema.fecha.split('-').reverse().join('/') : '';
                                 const generoTexto = tema.genero || '';
+                                const miniaturaUrl = `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`;
 
                                 htmlVideos += `
                                     <div class="w-[280px] md:w-[320px] shrink-0 snap-center bg-slate-900/80 rounded-2xl overflow-hidden border border-slate-800 shadow-lg flex flex-col transition-transform hover:-translate-y-1 backdrop-blur-sm">
-                                        <div class="relative w-full pb-[56.25%] bg-black">
-                                            <iframe class="absolute top-0 left-0 w-full h-full border-0" src="${urlEmbedSec}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                                        </div>
+                                        <button type="button" class="btn-flotante relative w-full pb-[56.25%] bg-black block group/play focus:outline-none" data-cancion-id="${cancionCardId}" data-video-id="${vId}" data-titulo="${(tema.nombre || 'Sin título').replace(/"/g, '&quot;')}" data-subtitulo="${(data.nombre || 'Artista').replace(/"/g, '&quot;')}" data-foto="${avatarUrl}" data-likes="${tema.likesCount || 0}" data-perfil-id="${artistaId}" data-pagina-perfil="artista.html">
+                                            <img src="${miniaturaUrl}" alt="${(tema.nombre || 'Miniatura').replace(/"/g, '&quot;')}" class="absolute top-0 left-0 w-full h-full object-cover" loading="lazy">
+                                            <div class="absolute inset-0 bg-black/30 group-hover/play:bg-black/50 transition-colors flex items-center justify-center">
+                                                <span class="w-14 h-14 rounded-full bg-indigo-600/90 group-hover/play:bg-indigo-500 shadow-xl flex items-center justify-center transition-transform group-hover/play:scale-110">
+                                                    <svg class="w-6 h-6 text-white translate-x-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6 4l10 6-10 6V4z"></path></svg>
+                                                </span>
+                                            </div>
+                                        </button>
                                         <div class="p-4 border-t border-slate-800/50 bg-slate-900/30 flex-1 flex flex-col justify-between">
                                             <div>
                                                 <div class="flex justify-between items-start gap-4">
@@ -232,12 +251,18 @@ async function cargarPerfil() {
                             const cancionCardId = `${artistaId}_${vId}`;
                             const fechaFormateada = tema.fecha ? tema.fecha.split('-').reverse().join('/') : '';
                             const generoTexto = tema.genero || '';
+                            const miniaturaUrl = `https://i.ytimg.com/vi/${vId}/hqdefault.jpg`;
 
                             htmlVideos += `
                                 <div class="w-full bg-slate-900/80 rounded-2xl overflow-hidden border border-slate-800 shadow-lg flex flex-col transition-transform hover:-translate-y-1 backdrop-blur-sm">
-                                    <div class="relative w-full pb-[56.25%] bg-black">
-                                        <iframe class="absolute top-0 left-0 w-full h-full border-0" src="${urlEmbedSec}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                                    </div>
+                                    <button type="button" class="btn-flotante relative w-full pb-[56.25%] bg-black block group/play focus:outline-none" data-cancion-id="${cancionCardId}" data-video-id="${vId}" data-titulo="${(tema.nombre || 'Sin título').replace(/"/g, '&quot;')}" data-subtitulo="${(data.nombre || 'Artista').replace(/"/g, '&quot;')}" data-foto="${avatarUrl}" data-likes="${tema.likesCount || 0}" data-perfil-id="${artistaId}" data-pagina-perfil="artista.html">
+                                        <img src="${miniaturaUrl}" alt="${(tema.nombre || 'Miniatura').replace(/"/g, '&quot;')}" class="absolute top-0 left-0 w-full h-full object-cover" loading="lazy">
+                                        <div class="absolute inset-0 bg-black/30 group-hover/play:bg-black/50 transition-colors flex items-center justify-center">
+                                            <span class="w-14 h-14 rounded-full bg-indigo-600/90 group-hover/play:bg-indigo-500 shadow-xl flex items-center justify-center transition-transform group-hover/play:scale-110">
+                                                <svg class="w-6 h-6 text-white translate-x-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6 4l10 6-10 6V4z"></path></svg>
+                                            </span>
+                                        </div>
+                                    </button>
                                     <div class="p-4 border-t border-slate-800/50 bg-slate-900/30 flex-1 flex flex-col justify-between">
                                         <div>
                                             <div class="flex justify-between items-start gap-4">
@@ -275,8 +300,17 @@ async function cargarPerfil() {
         }       
         cargando.classList.add('hidden');
         contenido.classList.remove('hidden');
+
+        // Las tarjetas de tema (destacado + videografía) ya están en el
+        // DOM en este punto — pintamos de una vez el estado de "me gusta"
+        // ya conocido (si el caché de interactions.js ya se cargó antes
+        // de que termináramos de renderizar) y quedará correcto también
+        // si se carga después, porque inicializarLikesEnTarjetas() vuelve
+        // a pintar todo el DOM en cuanto resuelve la sesión.
+        aplicarEstadoDeLikesEnDOM();
  
         inicializarInteracciones(artistaId);
+        inicializarReproductorFlotante(artistaId, data, avatarUrl);
  
     } catch (error) {
         mostrarError();
@@ -286,27 +320,21 @@ async function cargarPerfil() {
 function inicializarInteracciones(artistaId) {
     const btnSeguir = document.getElementById('btn-seguir');
     const contadorSeguidores = document.getElementById('contador-seguidores');
-    const contenedorPrincipal = document.getElementById('contenido-perfil');
  
     if (!auth) return;
  
+    // El estado de "me gusta" (detección inicial + pintado de las
+    // tarjetas) ahora lo maneja services/interactions.js de forma
+    // centralizada — ver inicializarLikesEnTarjetas() más abajo, llamada
+    // una sola vez desde cargarPerfil(). Aquí solo queda la lógica de
+    // "Seguir", que es propia de esta página.
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             try {
-                const [siguiendo, misLikes] = await Promise.all([
-                    esSeguidor(user.uid, artistaId),
-                    obtenerMisLikes(user.uid)
-                ]);
+                const siguiendo = await esSeguidor(user.uid, artistaId);
                 actualizarEstiloBotonSeguir(siguiendo, btnSeguir);
-
-                document.querySelectorAll('.btn-like').forEach(btn => {
-                    const cancionId = btn.dataset.cancionId;
-                    if (cancionId && misLikes.includes(cancionId)) {
-                        marcarBotonLike(btn, true);
-                    }
-                });
             } catch (error) {
-                console.error("Error al cargar estados de like/follow:", error);
+                console.error("Error al cargar estado de seguimiento:", error);
             }
         }
     });
@@ -331,42 +359,106 @@ function inicializarInteracciones(artistaId) {
         }
     });
  
-    contenedorPrincipal.addEventListener('click', async (e) => {
-        const btnLike = e.target.closest('.btn-like');
-        if (!btnLike) return;
- 
-        try {
-            const user = auth.currentUser;
-            if (!user) return mostrarToast("Debes iniciar sesión para dar me gusta.", 'warn');
- 
-            btnLike.disabled = true;
-            const cancionId = btnLike.dataset.cancionId;
- 
-            const res = await toggleLikeCancion(user.uid, cancionId);
- 
-            if (res && res.exito) {
-                marcarBotonLike(btnLike, res.liked);
-                const contadorLike = btnLike.querySelector('.count-likes');
-                let actual = parseInt(contadorLike.textContent) || 0;
-                contadorLike.textContent = res.liked ? actual + 1 : Math.max(0, actual - 1);
+    // El clic en '.btn-like' (toggle en Firestore, marcado visual del
+    // botón y sincronización con el reproductor flotante) lo maneja
+    // inicializarLikesEnTarjetas() de forma centralizada — no se registra
+    // ningún listener propio aquí para evitar un doble toggle por clic.
+    //
+    // Lo único específico de esta página es el contador agregado "Me
+    // gusta" del perfil (suma de likes de TODOS los temas, mostrado junto
+    // a Seguidores/Temas en la cabecera) — para eso escuchamos el evento
+    // que emite el servicio central en cada toggle exitoso, filtrando
+    // solo los que correspondan a una canción de ESTE perfil (para no
+    // sumar/restar si el usuario da like a algo ajeno mientras esta
+    // página sigue abierta, ej. desde la cola del reproductor flotante).
+    document.addEventListener('gg:like-actualizado', (e) => {
+        const { cancionId, liked } = e.detail || {};
+        if (!cancionId || !cancionId.startsWith(`${artistaId}_`)) return;
 
-                // Mantener sincronizado el total del perfil (Seguidores • Temas • Me gusta)
-                const elTotalLikes = document.getElementById('contador-likes-total');
-                if (elTotalLikes) {
-                    let totalActual = parseInt(elTotalLikes.textContent) || 0;
-                    elTotalLikes.textContent = res.liked ? totalActual + 1 : Math.max(0, totalActual - 1);
-                }
-            } else {
-                mostrarToast(res?.mensaje || "No se pudo procesar el like.", 'error');
-            }
-        } catch (error) {
-            console.error("Error al ejecutar toggleLikeCancion:", error);
-        } finally {
-            btnLike.disabled = false;
-        }
+        const elTotalLikes = document.getElementById('contador-likes-total');
+        if (!elTotalLikes) return;
+
+        const totalActual = parseInt(elTotalLikes.textContent) || 0;
+        elTotalLikes.textContent = liked ? totalActual + 1 : Math.max(0, totalActual - 1);
     });
 }
  
+// ==========================================
+// REPRODUCTOR FLOTANTE (Destacado + Más Videos)
+// ==========================================
+// Tanto el Tema Destacado como las tarjetas de "Más Videos"
+// (álbumes/EPs y Sencillos) usan miniaturas clicables (.btn-flotante)
+// que abren el reproductor flotante persistente — igual patrón que
+// canciones.js. Ya no hay ningún <iframe> de YouTube incrustado
+// directamente en la página.
+function inicializarReproductorFlotante(artistaId, data, avatarUrl) {
+    const gridVideos = document.getElementById('grid-mas-videos');
+    const btnDestacado = document.getElementById('btn-flotante-destacado');
+
+    // Cola con TODOS los temas del artista que tengan URL válida,
+    // incluido el destacado (data.temas ya lo contiene si el usuario lo
+    // marcó como tema), para que Siguiente/Anterior recorra la
+    // videografía completa del perfil sin importar desde qué tarjeta
+    // se empezó a reproducir.
+    const colaCompleta = (Array.isArray(data.temas) ? data.temas : [])
+        .map(tema => {
+            const vId = obtenerIdYouTube(tema.url);
+            if (!vId) return null;
+            return {
+                videoId: vId,
+                cancionId: `${artistaId}_${vId}`,
+                perfilId: artistaId,
+                paginaPerfil: 'artista.html',
+                titulo: tema.nombre || 'Sin título',
+                subtitulo: data.nombre || 'Artista',
+                fotoUrl: avatarUrl,
+                likesCount: tema.likesCount || 0,
+                meGusta: tieneLikeLocal(`${artistaId}_${vId}`)
+            };
+        })
+        .filter(Boolean);
+
+    function manejarClicBtnFlotante(btn) {
+        const cancionId = btn.dataset.cancionId;
+        const indice = colaCompleta.findIndex(item => item.cancionId === cancionId);
+
+        if (indice >= 0) {
+            establecerCola(colaCompleta, indice);
+            reproducirEnFlotante(colaCompleta[indice]);
+        } else {
+            // Respaldo por si el tema no aparece en la cola (dato
+            // incompleto): se reproduce igual con lo que trae el botón.
+            reproducirEnFlotante({
+                videoId: btn.dataset.videoId,
+                cancionId,
+                perfilId: btn.dataset.perfilId || artistaId,
+                paginaPerfil: btn.dataset.paginaPerfil || 'artista.html',
+                titulo: btn.dataset.titulo,
+                subtitulo: btn.dataset.subtitulo,
+                fotoUrl: btn.dataset.foto,
+                likesCount: parseInt(btn.dataset.likes, 10) || 0,
+                meGusta: tieneLikeLocal(cancionId)
+            });
+        }
+    }
+
+    if (gridVideos) {
+        gridVideos.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-flotante');
+            if (btn) manejarClicBtnFlotante(btn);
+        });
+    }
+
+    if (btnDestacado && btnDestacado.dataset.cancionId) {
+        btnDestacado.addEventListener('click', () => manejarClicBtnFlotante(btnDestacado));
+    }
+
+    // Reanuda automáticamente si el usuario venía de otra página con
+    // el reproductor activo (ej. llegó a este perfil desde el botón
+    // "Ver perfil" del propio widget flotante).
+    reanudarReproduccionAutomatica();
+}
+
 function actualizarEstiloBotonSeguir(siguiendo, btn) {
     if (siguiendo) {
         btn.innerHTML = `
@@ -386,17 +478,6 @@ function actualizarEstiloBotonSeguir(siguiendo, btn) {
     }
 }
  
-function marcarBotonLike(btn, liked) {
-    const icono = btn.querySelector('.icono-like');
-    if (liked) {
-        icono.classList.add('text-red-500', 'fill-current');
-        icono.classList.remove('text-gray-400');
-    } else {
-        icono.classList.remove('text-red-500', 'fill-current');
-        icono.classList.add('text-gray-400');
-    }
-}
- 
 function mostrarError() {
     cargando.classList.add('hidden');
     errorDiv.classList.remove('hidden');
@@ -409,22 +490,29 @@ function mostrarToast(mensaje, tipo = 'info') {
     const toastMensaje = document.getElementById('toast-mensaje');
     if (!toast || !toastMensaje) return;
 
+    // Configuración de tonos (rojo carmesí #8d001c para warn/error)
     const estilosPorTipo = {
         info:  { clase: 'bg-indigo-600', icono: '' },
-        warn:  { clase: 'bg-amber-500',  icono: '⚠️ ' },
-        error: { clase: 'bg-red-600',    icono: '⚠️ ' }
+        warn:  { clase: 'bg-[#8d001c]',   icono: '🔔 ' },
+        error: { clase: 'bg-[#DC143C]',   icono: '⚠️ ' }
     };
     const { clase, icono } = estilosPorTipo[tipo] || estilosPorTipo.info;
 
-    toast.classList.remove('bg-indigo-600', 'bg-amber-500', 'bg-red-600');
+    // Limpiar clases de fondo previas para evitar solapamientos
+    toast.classList.remove('bg-indigo-600', 'bg-amber-500', 'bg-red-600', 'bg-[#DC143C]');
     toast.classList.add(clase);
+    
     toastMensaje.textContent = `${icono}${mensaje}`;
 
-    toast.classList.remove('translate-y-20', 'opacity-0');
+    // Mostrar elemento y permitir interacciones si fuera necesario
+    toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+    toast.classList.add('translate-y-0', 'opacity-100');
 
+    // Ocultar limpiando explícitamente las clases de visibilidad
     clearTimeout(toastTimeoutId);
     toastTimeoutId = setTimeout(() => {
-        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
     }, 2500);
 }
 
@@ -437,4 +525,5 @@ document.getElementById('btn-compartir').addEventListener('click', () => {
     }
 });
 
+inicializarLikesEnTarjetas();
 cargarPerfil();

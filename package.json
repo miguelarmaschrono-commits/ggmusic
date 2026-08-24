@@ -2,10 +2,17 @@
   "name": "ggmusic",
   "version": "1.0.0",
   "description": "",
-  "main": "main.js", 
+  "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.ggmusic.app",
+    "productName": "GGmusic",
+    "win": {
+      "icon": "favicon.ico"
+    }
   },
   "repository": {
     "type": "git",
@@ -14,11 +21,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/miguelarmaschrono-commits/ggmusic/issues"
-  },
-  "homepage": "https://github.com/miguelarmaschrono-commits/ggmusic#readme",
   "devDependencies": {
     "electron": "^43.4.1",
     "electron-builder": "^24.13.3"

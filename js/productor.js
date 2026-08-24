@@ -7,7 +7,15 @@
 
 import { db, auth } from './firebase-config.js';
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { toggleSeguirArtista, esSeguidor } from './services/interactions.js';
+import { toggleSeguirArtista, esSeguidor, inicializarLikesEnTarjetas, aplicarEstadoDeLikesEnDOM } from './services/interactions.js';
+
+// El clic en '.btn-like' (toggle en Firestore, marcado visual y
+// sincronización con el reproductor flotante) lo maneja de forma
+// centralizada inicializarLikesEnTarjetas() — ver services/
+// interactions.js. Se llama UNA sola vez aquí, igual que en artista.js y
+// canciones.js; no se registra ningún listener de clic propio para
+// '.btn-like' en este archivo (evita el doble-toggle por clic).
+inicializarLikesEnTarjetas();
 
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Obtener el ID del productor desde la URL (Ej: productor.html?id=12345)
@@ -47,6 +55,17 @@ function renderizarDatos(data, productorId) {
     document.getElementById('productor-especialidad').textContent = data.especialidad || 'Producción Musical';
     document.getElementById('productor-bio').textContent = data.biografia || 'Este productor aún no ha redactado su biografía.';
     document.getElementById('contador-seguidores').textContent = data.seguidoresCount || 0;
+
+    // Total de "Me gusta" del perfil: suma de likesCount de todos los
+    // temas del portafolio. Igual criterio que ya usa artista.js — no es
+    // un campo aparte en Firestore, se deriva aquí mismo del array
+    // "temas" que ya viene incluido en la lectura del perfil, así que no
+    // cuesta ninguna lectura extra a la base de datos.
+    const totalLikesPerfil = Array.isArray(data.temas)
+        ? data.temas.reduce((suma, tema) => suma + (tema.likesCount || 0), 0)
+        : 0;
+    const elContadorLikesTotal = document.getElementById('contador-likes-total');
+    if (elContadorLikesTotal) elContadorLikesTotal.textContent = totalLikesPerfil;
 
     // El badge solo aparece si un admin marcó verificado:true en Firestore
     const badgeVerificado = document.getElementById('badge-verificado');
@@ -117,13 +136,36 @@ function renderizarDatos(data, productorId) {
     }
 
     // Portafolio / Beats
-    renderizarPortafolio(trabajos);
+    renderizarPortafolio(trabajos, productorId);
 
     // Servicios Ofrecidos
     renderizarServicios(data.servicios);
 
     // Seguir
     inicializarSeguimiento(productorId);
+
+    // Pintar el estado de "me gusta" ya conocido (si el caché de
+    // interactions.js ya se cargó antes de terminar de renderizar el
+    // portafolio) sobre las tarjetas recién insertadas. Si se carga
+    // después, quedará correcto igual — inicializarLikesEnTarjetas()
+    // vuelve a pintar todo el DOM en cuanto resuelve la sesión.
+    aplicarEstadoDeLikesEnDOM();
+
+    // Mantener sincronizado el contador agregado "Me gusta" del perfil
+    // cada vez que se le da like a un tema DE ESTE productor (filtramos
+    // por prefijo "productorId_" para no reaccionar a likes de otros
+    // perfiles que el usuario pueda dar mientras esta página sigue
+    // abierta, ej. desde la cola del reproductor flotante).
+    document.addEventListener('gg:like-actualizado', (e) => {
+        const { cancionId, liked } = e.detail || {};
+        if (!cancionId || !cancionId.startsWith(`${productorId}_`)) return;
+
+        const elTotal = document.getElementById('contador-likes-total');
+        if (!elTotal) return;
+
+        const totalActual = parseInt(elTotal.textContent) || 0;
+        elTotal.textContent = liked ? totalActual + 1 : Math.max(0, totalActual - 1);
+    });
 }
 
 function renderizarServicios(serviciosTexto) {
@@ -176,11 +218,18 @@ function formatearYoutubeEmbed(url) {
  * contextos es el ancho de la tarjeta, así que se recibe como parámetro
  * en vez de duplicar el marcado dos veces.
  */
-function construirTarjetaTrabajo(tema, dentroDeCarrusel) {
+function construirTarjetaTrabajo(tema, dentroDeCarrusel, productorId) {
     const nombreSeguro = escapeHTML(tema.nombre || 'Trabajo sin título');
     const generoSeguro = escapeHTML(tema.genero || '');
     const fechaFormateada = tema.fecha ? escapeHTML(tema.fecha.split('-').reverse().join('/')) : '';
     const claseAncho = dentroDeCarrusel ? 'w-[280px] md:w-[320px] shrink-0 snap-center' : 'w-full';
+
+    // Mismo formato de cancionId compuesto ("perfilId_videoId") que usa
+    // el resto del sitio (ver interactions.js: descomponerCancionId) —
+    // así toggleLikeCancion() puede ubicar este tema dentro del array
+    // "temas" del productor sin necesitar ningún campo nuevo.
+    const videoId = obtenerIdYouTube(tema.url);
+    const cancionIdSeguro = videoId ? escapeHTML(`${productorId}_${videoId}`) : '';
 
     return `
         <div class="${claseAncho} bg-dark/60 rounded-xl overflow-hidden border border-gray-800 shadow-lg flex flex-col transition-transform hover:-translate-y-1">
@@ -188,7 +237,15 @@ function construirTarjetaTrabajo(tema, dentroDeCarrusel) {
                 <iframe class="absolute top-0 left-0 w-full h-full border-0" src="${tema.embedUrl}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             </div>
             <div class="p-4">
-                <h4 class="text-sm font-bold text-white line-clamp-1">${nombreSeguro}</h4>
+                <div class="flex justify-between items-start gap-3">
+                    <h4 class="text-sm font-bold text-white line-clamp-1 flex-1">${nombreSeguro}</h4>
+                    ${cancionIdSeguro ? `
+                    <button class="btn-like flex items-center gap-1.5 text-slate-400 hover:text-rose-500 transition focus:outline-none shrink-0" data-cancion-id="${cancionIdSeguro}">
+                        <svg class="w-5 h-5 icono-like transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                        <span class="count-likes text-xs font-bold">${tema.likesCount || 0}</span>
+                    </button>
+                    ` : ''}
+                </div>
                 ${(generoSeguro || fechaFormateada) ? `
                     <div class="text-xs text-gray-400 mt-1 flex items-center gap-1.5 font-medium">
                         ${generoSeguro ? `<span>${generoSeguro}</span>` : ''}
@@ -208,7 +265,7 @@ function construirTarjetaTrabajo(tema, dentroDeCarrusel) {
  * en un carrusel horizontal con scroll-snap; los que no tienen agrupación
  * se muestran sueltos en una grilla normal debajo.
  */
-function renderizarPortafolio(trabajos) {
+function renderizarPortafolio(trabajos, productorId) {
     const contenedor = document.getElementById('productor-portafolio');
     if (!contenedor) return;
 
@@ -247,7 +304,7 @@ function renderizarPortafolio(trabajos) {
                         ${escapeHTML(nombreLista)}
                     </h3>
                     <div class="flex overflow-x-auto gap-6 pb-6 snap-x scrollbar-thin scrollbar-thumb-gray-700">
-                        ${temasGrupo.map(tema => construirTarjetaTrabajo(tema, true)).join('')}
+                        ${temasGrupo.map(tema => construirTarjetaTrabajo(tema, true, productorId)).join('')}
                     </div>
                 </div>
             `;
@@ -263,7 +320,7 @@ function renderizarPortafolio(trabajos) {
                     Trabajos Individuales
                 </h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    ${trabajosSinLista.map(tema => construirTarjetaTrabajo(tema, false)).join('')}
+                    ${trabajosSinLista.map(tema => construirTarjetaTrabajo(tema, false, productorId)).join('')}
                 </div>
             </div>
         `;
@@ -400,27 +457,35 @@ function escapeUrl(url) {
 
 let toastTimeoutId = null;
 
-function mostrarToast(mensaje, tipo = 'info') {
+function mostrarToast(mensaje, tipo = 'warn') {
     const toast = document.getElementById('toast');
     const toastMensaje = document.getElementById('toast-mensaje');
     if (!toast || !toastMensaje) return;
 
+    // Mapeo de estilos incorporando rojo carmesí (#DC143C)
     const estilosPorTipo = {
         info:  { clase: 'bg-emerald-600', icono: '' },
-        warn:  { clase: 'bg-amber-500',   icono: '⚠️ ' },
-        error: { clase: 'bg-red-600',     icono: '⚠️ ' }
+        warn:  { clase: 'bg-[#8d001c]',   icono: '🔔 ' },
+        error: { clase: 'bg-[#DC143C]',   icono: '⚠️ ' }
     };
-    const { clase, icono } = estilosPorTipo[tipo] || estilosPorTipo.info;
 
-    toast.classList.remove('bg-emerald-600', 'bg-amber-500', 'bg-red-600');
+    const { clase, icono } = estilosPorTipo[tipo] || estilosPorTipo.warn;
+
+    // Remover clases de fondo previas para aplicar la nueva sin solapamientos
+    toast.classList.remove('bg-emerald-600', 'bg-amber-500', 'bg-red-600', 'bg-[#DC143C]');
     toast.classList.add(clase);
+    
     toastMensaje.textContent = `${icono}${mensaje}`;
 
-    toast.classList.remove('translate-y-20', 'opacity-0');
+    // Hacer visible
+    toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+    toast.classList.add('translate-y-0', 'opacity-100');
 
+    // Ocultar automáticamente
     clearTimeout(toastTimeoutId);
     toastTimeoutId = setTimeout(() => {
-        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
     }, 2500);
 }
 

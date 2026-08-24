@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GGmusic - Descargas</title>
+    <link rel="shortcut icon" href="assets/favicon/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon/apple-touch-icon.png">
+     
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        body { padding-bottom: 80px; }
+        @media (min-width: 768px) { body { padding-bottom: 0; } }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- Barra de Navegación -->
+    <nav class="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/80 border-b border-slate-800/60">
+        <div class="container mx-auto px-4 h-16 flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-black tracking-tighter text-white">
+                GG<span class="text-indigo-500">music</span>
+            </a>
+            <div class="hidden md:flex items-center space-x-6">
+                
+                <a href="explorar.html" class="text-sm font-medium text-slate-400 hover:text-white transition">Artistas</a>
+                <a href="explorar-productores.html" class="text-sm font-medium text-slate-400 hover:text-white transition">Productores</a>
+                <a href="canciones.html" class="text-sm font-medium text-slate-400 hover:text-white transition">Canciones</a>
+                
+                <a href="login.html" id="nav-login" class="text-sm font-medium text-slate-400 hover:text-white transition">Ingresar</a>
+                <a href="registro.html" id="nav-registro" class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-full text-sm font-bold transition shadow-md shadow-indigo-600/20">Crear Perfil</a>
+                
+                <a href="biblioteca.html" id="nav-biblioteca" class="hidden text-sm font-medium text-indigo-400 hover:text-indigo-300 transition">Mi Biblioteca</a>
+                <a href="#" id="nav-panel" class="hidden text-sm font-medium text-indigo-400 hover:text-indigo-300 transition">Mi Panel</a>
+                <button id="nav-logout" class="hidden bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 px-4 py-1.5 rounded-full text-xs font-bold transition">Cerrar Sesión</button>
+            
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido Principal -->
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+        <!-- Encabezado -->
+        <div class="text-center space-y-4 mb-12">
+            <h1 class="text-3xl md:text-5xl font-black leading-tight text-white tracking-tight">
+                Descarga <span class="text-indigo-500">GGmusic</span>
+            </h1>
+            <p class="text-slate-400 text-base md:text-lg max-w-2xl mx-auto">
+                Elige tu dispositivo y obtén la app directamente desde MediaFire.
+            </p>
+        </div>
+
+        <!-- Tarjetas de Descarga -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+
+            <!-- Android -->
+            <div class="flex flex-col items-center text-center gap-4 p-8 rounded-3xl border border-slate-800/80 bg-slate-900/60 hover:border-indigo-500/40 transition">
+                <div class="w-16 h-16 flex items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-400">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.523 15.34l1.833-3.176a.415.415 0 00-.152-.567.416.416 0 00-.568.152l-1.857 3.216a11.29 11.29 0 00-4.779-1.056c-1.723 0-3.353.383-4.78 1.056L5.365 11.75a.416.416 0 00-.568-.152.415.415 0 00-.152.567l1.833 3.176C3.9 16.9 2.03 19.68 1.75 22.9h20.5c-.28-3.22-2.15-6-5.727-7.56zM7 19.5a1 1 0 110-2 1 1 0 010 2zm10 0a1 1 0 110-2 1 1 0 010 2z"/>
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold text-white">Android</h2>
+                <p class="text-xs text-slate-400">Descarga el APK desde MediaFire e instálalo en tu teléfono.</p>
+                <a href="#" id="link-descarga-android" target="_blank" rel="noopener noreferrer"
+                   class="mt-auto w-full inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-3 px-6 rounded-full transition shadow-lg shadow-indigo-500/20">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                    Descargar
+                </a>
+            </div>
+
+            <!-- iPhone -->
+            <div class="flex flex-col items-center text-center gap-4 p-8 rounded-3xl border border-slate-800/80 bg-slate-900/60 hover:border-indigo-500/40 transition">
+                <div class="w-16 h-16 flex items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-400">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.52-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.75 3.08.8.94-.13 1.83-.83 3.05-.94 1.52-.12 2.67.6 3.42 1.76-3.06 1.85-2.4 5.94.5 7.15-.6 1.63-1.37 3.23-2.05 4.2zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold text-white">iPhone</h2>
+                <p class="text-xs text-slate-400">Instala GGmusic como app directamente desde Safari.</p>
+                <button type="button" id="btn-instalar-iphone"
+                   class="mt-auto w-full inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-3 px-6 rounded-full transition shadow-lg shadow-indigo-500/20">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Instalar
+                </button>
+            </div>
+
+            <!-- PC -->
+            <div class="flex flex-col items-center text-center gap-4 p-8 rounded-3xl border border-slate-800/80 bg-slate-900/60 hover:border-indigo-500/40 transition">
+                <div class="w-16 h-16 flex items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-400">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25"/>
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold text-white">PC</h2>
+                <p class="text-xs text-slate-400">Descarga el instalador para Windows desde MediaFire.</p>
+                <a href="#" id="link-descarga-pc" target="_blank" rel="noopener noreferrer"
+                   class="mt-auto w-full inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-3 px-6 rounded-full transition shadow-lg shadow-indigo-500/20">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                    Descargar
+                </a>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal Instalar en iPhone -->
+    <div id="modal-instalar-iphone" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div id="modal-iphone-backdrop" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+        <div class="relative w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl">
+            <div class="flex items-start justify-between mb-4">
+                <h3 class="text-lg font-bold text-white">Instalar en iPhone</h3>
+                <button type="button" id="btn-cerrar-modal-iphone" class="text-slate-400 hover:text-white transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <p id="modal-iphone-texto" class="text-sm text-slate-400 mb-5">
+                Para instalar GGmusic en tu iPhone, abre este sitio con <strong class="text-white">Safari</strong> y sigue estos pasos:
+            </p>
+
+            <ol class="space-y-3 text-sm text-slate-300">
+                <li class="flex items-start gap-3">
+                    <span class="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-indigo-500/15 text-indigo-400 text-xs font-bold">1</span>
+                    <span>Toca el botón <strong class="text-white">Compartir</strong>
+                        <svg class="w-4 h-4 inline -mt-0.5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                        en la barra inferior de Safari.
+                    </span>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-indigo-500/15 text-indigo-400 text-xs font-bold">2</span>
+                    <span>Desplázate y selecciona <strong class="text-white">"Agregar a pantalla de inicio"</strong>.</span>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-indigo-500/15 text-indigo-400 text-xs font-bold">3</span>
+                    <span>Toca <strong class="text-white">"Agregar"</strong> y listo, GGmusic quedará instalado como app.</span>
+                </li>
+            </ol>
+
+            <button type="button" id="btn-entendido-modal-iphone" class="mt-6 w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-3 rounded-full transition">
+                Entendido
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer Delta Core -->
+    <footer class="w-full border-t border-slate-800/60 py-8 mt-12">
+        <p class="text-center text-slate-500 text-sm">© 2026 Team Seven. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Menú Inferior Móvil -->
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800 z-50 flex justify-around items-center h-16 px-2">
+        <a href="index.html" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-white transition">
+            <svg class="w-6 h-6 mb-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L4 9v12h5v-7h6v7h5V9z"/></svg>
+            <span class="text-[10px]">Inicio</span>
+        </a>
+        
+        <a href="explorar.html" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-white transition">
+            <svg class="w-6 h-6 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+            <span class="text-[10px]">Artistas</span>
+        </a>
+
+        <a href="explorar-productores.html" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-white transition">
+            <svg class="w-6 h-6 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+            <span class="text-[10px]">Productores</span>
+        </a>
+
+        <a href="canciones.html" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-white transition">
+            <svg class="w-6 h-6 mb-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1014 17V7h4V3h-6z"/></svg>
+            <span class="text-[10px]">Canciones</span>
+        </a>
+        
+        <a href="biblioteca.html" id="nav-mobile-biblioteca" class="hidden flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-indigo-400 transition">
+            <svg class="w-6 h-6 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+            <span class="text-[10px]">Biblioteca</span>
+        </a>
+
+        <a href="login.html" id="nav-mobile-perfil" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-white transition">
+            <svg class="w-6 h-6 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            <span class="text-[10px]" id="texto-mobile-perfil">Ingresar</span>
+        </a>
+
+        <button type="button" id="nav-mobile-logout" class="hidden flex flex-col items-center justify-center w-full h-full text-red-400 hover:text-red-300 transition">
+            <svg class="w-6 h-6 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            <span class="text-[10px]">Salir</span>
+        </button>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/index.js"></script>
+    <script>
+        // Enlaces de descarga MediaFire — reemplaza los "#" por tus links reales
+        document.getElementById('link-descarga-android').href = "https://www.mediafire.com/file/sx1llrsqiapofkl/GGmusic_1.0.0.0.apk/file";
+        document.getElementById('link-descarga-pc').href = "https://www.mediafire.com/file/hj6c45mmflxm24z/GGmusic.zip/file";
+
+        // Modal "Instalar en iPhone" (PWA vía Safari)
+        (function () {
+            const modal = document.getElementById('modal-instalar-iphone');
+            const backdrop = document.getElementById('modal-iphone-backdrop');
+            const btnAbrir = document.getElementById('btn-instalar-iphone');
+            const btnCerrar = document.getElementById('btn-cerrar-modal-iphone');
+            const btnEntendido = document.getElementById('btn-entendido-modal-iphone');
+            const texto = document.getElementById('modal-iphone-texto');
+
+            const ua = navigator.userAgent || '';
+            const esIOS = /iPad|iPhone|iPod/.test(ua);
+            const esSafari = /^((?!chrome|android|crios|fxios|edgios).)*safari/i.test(ua);
+
+            if (!esIOS) {
+                texto.innerHTML = 'Este instalador está pensado para iPhone. Abre este sitio desde tu iPhone con <strong class="text-white">Safari</strong> para poder instalar GGmusic.';
+            } else if (!esSafari) {
+                texto.innerHTML = 'Para instalar GGmusic necesitas usar <strong class="text-white">Safari</strong>. Abre este enlace desde Safari y sigue estos pasos:';
+            }
+
+            function abrirModal() {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+            function cerrarModal() {
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            btnAbrir.addEventListener('click', abrirModal);
+            btnCerrar.addEventListener('click', cerrarModal);
+            btnEntendido.addEventListener('click', cerrarModal);
+            backdrop.addEventListener('click', cerrarModal);
+        })();
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker de GGmusic activo', reg.scope))
+                    .catch(err => console.error('Error al registrar Service Worker:', err));
+            });
+        }
+    </script>
+</body>
+</html>

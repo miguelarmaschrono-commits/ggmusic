@@ -20,63 +20,63 @@
         .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
         .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
         .scrollbar-thin::-webkit-scrollbar-thumb { background-color: #334155; border-radius: 20px; }
+        
         /* ============================================
-   CONTROLES DE CARRUSEL (flechas + degradado)
-   Reutilizados por los 3 bloques de "Más Populares"
-   y por "Recién Publicado" — ver canciones.js: configurarCarrusel().
-   ============================================ */
-.carousel-wrapper { position: relative; }
+           CONTROLES DE CARRUSEL (flechas + degradado)
+           Reutilizados por los 3 bloques de "Más Populares"
+           y por "Recién Publicado" — ver canciones.js: configurarCarrusel().
+           ============================================ */
+        .carousel-wrapper { position: relative; }
 
-.carousel-arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 20;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 9999px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(15, 23, 42, 0.85);
-    border: 1px solid rgba(51, 65, 85, 0.8);
-    color: #e2e8f0;
-    backdrop-filter: blur(6px);
-    cursor: pointer;
-    transition: opacity 0.2s ease, background-color 0.2s ease;
-}
-.carousel-arrow:hover { background: rgba(30, 41, 59, 0.95); }
-.carousel-arrow-prev { left: -0.5rem; }
-.carousel-arrow-next { right: -0.5rem; }
+        .carousel-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 20;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0f172a; /* Fondo sólido en lugar de rgba+blur para rendimiento */
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            cursor: pointer;
+            transition: opacity 0.2s ease, background-color 0.2s ease;
+        }
+        .carousel-arrow:hover { background: #1e293b; }
+        .carousel-arrow-prev { left: -0.5rem; }
+        .carousel-arrow-next { right: -0.5rem; }
 
-/* Las flechas son un extra de escritorio — en móvil el arrastre táctil
-   ya es el patrón esperado y las flechas solo restan espacio. */
-@media (max-width: 767px) {
-    .carousel-arrow { display: none !important; }
-}
+        /* Las flechas son un extra de escritorio — en móvil el arrastre táctil
+           ya es el patrón esperado y las flechas solo restan espacio. */
+        @media (max-width: 767px) {
+            .carousel-arrow { display: none !important; }
+        }
 
-/* Degradado "hay más contenido" — visible SOLO en móvil, donde no hay
-   flechas que ya comuniquen lo mismo. */
-.carousel-fade-right {
-    position: absolute;
-    top: 0;
-    bottom: 24px; /* deja libre la franja de la scrollbar delgada (pb-6) */
-    right: 0;
-    width: 48px;
-    background: linear-gradient(to right, transparent, #020617 92%);
-    pointer-events: none;
-    z-index: 10;
-    transition: opacity 0.3s ease;
-}
-@media (min-width: 768px) {
-    .carousel-fade-right { display: none; }
-}
+        /* Degradado "hay más contenido" — visible SOLO en móvil, donde no hay
+           flechas que ya comuniquen lo mismo. */
+        .carousel-fade-right {
+            position: absolute;
+            top: 0;
+            bottom: 24px; /* deja libre la franja de la scrollbar delgada (pb-6) */
+            right: 0;
+            width: 48px;
+            background: linear-gradient(to right, transparent, #020617 92%);
+            pointer-events: none;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+        }
+        @media (min-width: 768px) {
+            .carousel-fade-right { display: none; }
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-indigo-500 selection:text-white">
 
     <!-- Barra de Navegación -->
-    <nav class="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/80 border-b border-slate-800/60">
+    <nav class="sticky top-0 z-50 bg-slate-950 border-b border-slate-800/60">
         <div class="container mx-auto px-4 h-16 flex justify-between items-center">
             <a href="index.html" class="text-2xl font-black tracking-tighter text-white">
                 GG<span class="text-indigo-500">music</span>
@@ -100,10 +100,7 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
 
         <!-- Cabecera -->
-        <section class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-rose-950/40 via-slate-900 to-slate-900 border border-slate-800/80 p-8 md:p-10 shadow-2xl">
-            <div class="absolute -top-24 -left-24 w-72 h-72 bg-rose-500/10 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="absolute -bottom-24 -right-24 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
+        <section class="relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 p-8 md:p-10 shadow-lg">
             <div class="relative z-10 space-y-3">
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold uppercase tracking-wider">
                     <span>🎵 Todo el Sonido Local</span>
@@ -115,91 +112,180 @@
             </div>
         </section>
 
+        <!-- Módulo Profesional de Búsqueda y Filtros con Stacking Context Corregido -->
+        <div class="relative z-30 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-lg space-y-4 mb-8">
+            
+            <!-- Input Principal de Búsqueda -->
+            <div class="relative w-full">
+                <input type="text" 
+                       id="inputBuscador" 
+                       placeholder="Buscar canción o artista..." 
+                       class="w-full bg-[#1e293b] text-white placeholder-slate-400 border border-slate-700/80 rounded-xl px-4 py-3 pl-11 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition text-sm">
+                <svg class="w-5 h-5 text-slate-400 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </div>
+
+            <!-- Barra de Filtros Desplegables -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                
+                <!-- Filtro: Zona -->
+                <div class="relative dropdown-filtro" id="dropdownZona">
+                    <button type="button" class="btn-dropdown w-full bg-[#1e293b] text-slate-300 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm flex justify-between items-center hover:border-slate-600 transition">
+                        <span class="label-selected font-medium truncate">Todas las zonas</span>
+                        <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <ul class="lista-opciones hidden absolute left-0 right-0 top-full mt-2 bg-[#1e293b] border border-slate-700 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto scrollbar-thin">
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Todas">Todas las zonas</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Barlovento">Barlovento</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Caucagua">Caucagua</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Guarenas">Guarenas</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Guatire">Guatire</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Araira">Araira</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Caracas">Caracas</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Petare">Petare</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition" data-value="Los Teques">Los Teques</li>
+                    </ul>
+                </div>
+
+                <!-- Filtro: Género -->
+                <div class="relative dropdown-filtro" id="dropdownGenero">
+                    <button type="button" class="btn-dropdown w-full bg-[#1e293b] text-slate-300 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm flex justify-between items-center hover:border-slate-600 transition">
+                        <span class="label-selected font-medium truncate">Todos los géneros</span>
+                        <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <ul class="lista-opciones hidden absolute left-0 right-0 top-full mt-2 bg-[#1e293b] border border-slate-700 rounded-xl shadow-xl z-50 max-h-60 overflow-y-auto scrollbar-thin">
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Todos">Todos los géneros</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Musica Urbana">Musica Urbana</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Rap / Hip-Hop">Rap / Hip-Hop</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Trap / Drill">Trap / Drill</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Reggaeton">Reggaeton</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Afrogaita">Afrogaita</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Afrobeat">Afrobeat</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Pop">Pop</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Rock / Alternativo">Rock / Alternativo</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="R&B">R&B</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Deep House">Deep House</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Salsa / Caribeño">Salsa / Caribeño</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition" data-value="Jazz">Jazz</li>
+                    </ul>
+                </div>
+
+                <!-- Filtro: Verificación -->
+                <div class="relative dropdown-filtro" id="dropdownVerificado">
+                    <button type="button" class="btn-dropdown w-full bg-[#1e293b] text-slate-300 border border-slate-700/80 rounded-xl px-4 py-2.5 text-sm flex justify-between items-center hover:border-slate-600 transition">
+                        <span class="label-selected font-medium truncate">Estado de verificación</span>
+                        <svg class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <ul class="lista-opciones hidden absolute left-0 right-0 top-full mt-2 bg-[#1e293b] border border-slate-700 rounded-xl shadow-xl z-50">
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50" data-value="Todos">Todos los perfiles</li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition border-b border-slate-800/50 flex items-center gap-1.5" data-value="Verificado">
+                            <span>Solo Verificados</span>
+                            <svg class="w-4 h-4 text-indigo-400 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        </li>
+                        <li class="px-4 py-2.5 text-sm text-slate-300 hover:bg-indigo-600 hover:text-white cursor-pointer transition" data-value="No Verificado">Sin Verificar</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
         <div class="text-xs text-slate-500 border-b border-slate-800/60 pb-3" id="feed-canciones-info-actualizacion">
             Cargando canciones...
         </div>
 
         <!-- Top Canciones (más "me gusta") — dividido en tres bloques de 10 con scroll horizontal -->
         <section aria-label="Top Canciones" class="space-y-8">
-            <div class="flex items-center justify-between border-b border-slate-800/80 pb-4">
-                <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2 tracking-tight">
-                    <span class="text-rose-500">❤️</span> Más Populares
+            <div class="flex items-center justify-between p-4 rounded-xl border border-rose-500/40 bg-slate-900 shadow-md">
+                <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2.5 tracking-tight">
+                    <span class="text-rose-500">❤️</span>
+                    <span>Más Populares</span>
                 </h2>
             </div>
 
-            <div class="space-y-3">
-    <h3 class="text-sm font-bold text-yellow-400">🥇 Top 1 - 10</h3>
-    <div class="carousel-wrapper">
-        <div id="gridCancionesPopulares1" class="flex overflow-x-auto gap-6 pb-6 snap-x scrollbar-thin scrollbar-thumb-slate-700"></div>
-        <button type="button" class="carousel-arrow carousel-arrow-prev hidden" aria-label="Ver canciones anteriores">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-        </button>
-        <button type="button" class="carousel-arrow carousel-arrow-next hidden" aria-label="Ver más canciones">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-        </button>
-        <div class="carousel-fade-right hidden"></div>
-    </div>
-</div>
-            <div class="space-y-3">
-    <h3 class="text-sm font-bold text-yellow-400">🥈 Top 11 - 20</h3>
-    <div class="carousel-wrapper">
-        <!-- CORRECCIÓN APLICADA: gridCancionesPopulares2 -->
-        <div id="gridCancionesPopulares2" class="flex overflow-x-auto gap-6 pb-6 snap-x scrollbar-thin scrollbar-thumb-slate-700"></div>
-        <button type="button" class="carousel-arrow carousel-arrow-prev hidden" aria-label="Ver canciones anteriores">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-        </button>
-        <button type="button" class="carousel-arrow carousel-arrow-next hidden" aria-label="Ver más canciones">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-        </button>
-        <div class="carousel-fade-right hidden"></div>
-    </div>
-</div>
-            <div class="space-y-3">
-    <h3 class="text-sm font-bold text-yellow-400">🥉 Top 21 - 30</h3>
-    <div class="carousel-wrapper">
-        <!-- CORRECCIÓN APLICADA: gridCancionesPopulares3 -->
-        <div id="gridCancionesPopulares3" class="flex overflow-x-auto gap-6 pb-6 snap-x scrollbar-thin scrollbar-thumb-slate-700"></div>
-        <button type="button" class="carousel-arrow carousel-arrow-prev hidden" aria-label="Ver canciones anteriores">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-        </button>
-        <button type="button" class="carousel-arrow carousel-arrow-next hidden" aria-label="Ver más canciones">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-        </button>
-        <div class="carousel-fade-right hidden"></div>
-    </div>
-</div>
+            <!-- LIGA ORO -->
+            <div class="space-y-3 p-4 rounded-2xl bg-slate-900 border border-amber-500/30 shadow-md">
+                <h3 class="text-sm font-bold text-white">
+                    🥇 Top 10 - <span class="text-amber-400">Liga Oro</span>
+                </h3>
+                <div class="carousel-wrapper">
+                    <div id="gridCancionesPopulares1" class="flex overflow-x-auto gap-6 pb-6 snap-x scrollbar-thin scrollbar-thumb-amber-500/30"></div>
+                    <button type="button" class="carousel-arrow carousel-arrow-prev hidden" aria-label="Ver canciones anteriores">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <button type="button" class="carousel-arrow carousel-arrow-next hidden" aria-label="Ver más canciones">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                    <div class="carousel-fade-right hidden"></div>
+                </div>
+            </div>
+
+            <!-- LIGA PLATA -->
+            <div class="space-y-3 p-4 rounded-2xl bg-slate-900 border border-slate-400/30 shadow-md">
+                <h3 class="text-sm font-bold text-white">
+                    🥈 Top 10 - <span class="text-slate-300">Liga Plata</span>
+                </h3>
+                <div class="carousel-wrapper">
+                    <div id="gridCancionesPopulares2" class="flex overflow-x-auto gap-6 pb-6 snap-x scrollbar-thin scrollbar-thumb-slate-500/30"></div>
+                    <button type="button" class="carousel-arrow carousel-arrow-prev hidden" aria-label="Ver canciones anteriores">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <button type="button" class="carousel-arrow carousel-arrow-next hidden" aria-label="Ver más canciones">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                    <div class="carousel-fade-right hidden"></div>
+                </div>
+            </div>
+
+            <!-- LIGA BRONCE -->
+            <div class="space-y-3 p-4 rounded-2xl bg-slate-900 border border-amber-700/40 shadow-md">
+                <h3 class="text-sm font-bold text-white">
+                    🥉 Top 10 - <span class="text-amber-600">Liga Bronce</span>
+                </h3>
+                <div class="carousel-wrapper">
+                    <div id="gridCancionesPopulares3" class="flex overflow-x-auto gap-6 pb-6 snap-x scrollbar-thin scrollbar-thumb-amber-700/30"></div>
+                    <button type="button" class="carousel-arrow carousel-arrow-prev hidden" aria-label="Ver canciones anteriores">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <button type="button" class="carousel-arrow carousel-arrow-next hidden" aria-label="Ver más canciones">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                    <div class="carousel-fade-right hidden"></div>
+                </div>
+            </div>
         </section>
 
         <!-- Recién Publicado -->
         <section aria-label="Canciones Recién Publicadas" class="space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-800/80 pb-4">
-                <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2 tracking-tight">
-                    <span class="text-indigo-400">🆕</span> Recién Publicado
+            <div class="flex items-center justify-between p-4 rounded-xl border border-blue-600/50 bg-slate-900 shadow-md">
+                <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2.5 tracking-tight">
+                    <span class="text-blue-400">🆕</span>
+                    <span>Recién Publicado</span>
                 </h2>
             </div>
             <p class="text-sm text-slate-500 -mt-2">Los últimos temas y beats agregados al catálogo.</p>
             <div class="carousel-wrapper">
-    <div id="gridCancionesRecientes" class="flex overflow-x-auto gap-6 pb-6 snap-x scrollbar-thin scrollbar-thumb-slate-700"></div>
-    <button type="button" class="carousel-arrow carousel-arrow-prev hidden" aria-label="Ver canciones anteriores">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-    </button>
-    <button type="button" class="carousel-arrow carousel-arrow-next hidden" aria-label="Ver más canciones">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-    </button>
-    <div class="carousel-fade-right hidden"></div>
-</div>
+                <div id="gridCancionesRecientes" class="flex overflow-x-auto gap-6 pb-6 snap-x scrollbar-thin scrollbar-thumb-slate-700"></div>
+                <button type="button" class="carousel-arrow carousel-arrow-prev hidden" aria-label="Ver canciones anteriores">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <button type="button" class="carousel-arrow carousel-arrow-next hidden" aria-label="Ver más canciones">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+                <div class="carousel-fade-right hidden"></div>
+            </div>
         </section>
-<!-- Top por Géneros (renderizado dinámicamente desde canciones.js) -->
-<section id="contenedor-generos" class="space-y-8" aria-label="Top por Géneros"></section>
+        
+        <!-- Top por Géneros (renderizado dinámicamente desde canciones.js) -->
+        <section id="contenedor-generos" class="space-y-8" aria-label="Top por Géneros"></section>
     </main>
 
     <!-- Toast de Notificaciones -->
-    <div id="toast" class="fixed bottom-24 md:bottom-6 right-6 z-50 bg-rose-600 text-white px-5 py-3.5 rounded-2xl shadow-2xl shadow-rose-600/30 border border-rose-400/30 text-xs font-bold transform translate-y-20 opacity-0 transition-all duration-300 backdrop-blur-md">
+    <div id="toast" class="fixed bottom-24 md:bottom-6 right-6 z-50 bg-rose-600 text-white px-5 py-3.5 rounded-2xl shadow-xl border border-rose-400/30 text-xs font-bold transform translate-y-20 opacity-0 transition-all duration-300">
         <span id="toast-mensaje"></span>
     </div>
 
     <!-- Menú Inferior Móvil -->
-    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800 z-50 flex justify-around items-center h-16 px-2">
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-950 border-t border-slate-800 z-50 flex justify-around items-center h-16 px-2">
         <a href="index.html" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-white transition">
             <svg class="w-6 h-6 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
             <span class="text-[10px]">Inicio</span>
@@ -239,15 +325,14 @@
     <!-- SCRIPTS -->
     <script type="module" src="js/firebase-config.js"></script>
     <script type="module" src="js/canciones.js"></script>
-    <script src="js/hack/keep-active.js"></script>
     <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('Service Worker de GGmusic activo', reg.scope))
-        .catch(err => console.error('Error al registrar Service Worker:', err));
-    });
-  }
-</script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('Service Worker de GGmusic activo', reg.scope))
+            .catch(err => console.error('Error al registrar Service Worker:', err));
+        });
+      }
+    </script>
 </body>
 </html>

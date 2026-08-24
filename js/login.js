@@ -71,3 +71,12 @@ if (form) {
         }
     });
 }
+
+// Redirección al Instagram oficial en caso de usar el botón o ID de recupero
+const btnOlvidePass = document.getElementById('btn-olvide-pass');
+if (btnOlvidePass) {
+    btnOlvidePass.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.open('https://www.instagram.com/ggmusic_oficial?igsh=eTJiMXF1aWVhZ2Vu', '_blank', 'noopener,noreferrer');
+    });
+}

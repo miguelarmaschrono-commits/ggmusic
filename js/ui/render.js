@@ -44,6 +44,69 @@ function optimizarUrlCloudinary(url, ancho = 400) {
     return url.replace('/upload/', `/upload/${transformacion}/`);
 }
 
+// Formatea números grandes para las tarjetas (1200 -> "1.2K", 2500000 ->
+// "2.5M"), igual criterio que redes sociales habituales. Números por
+// debajo de 1000 se muestran tal cual, sin decimales inventados.
+function formatearContador(numero) {
+    const n = typeof numero === 'number' ? numero : 0;
+    if (n < 1000) return String(n);
+    if (n < 1_000_000) {
+        const valor = n / 1000;
+        return `${valor % 1 === 0 ? valor : valor.toFixed(1)}K`;
+    }
+    const valor = n / 1_000_000;
+    return `${valor % 1 === 0 ? valor : valor.toFixed(1)}M`;
+}
+
+// El total de "Me gusta" de un perfil (suma de likesCount de todos sus
+// temas) se resuelve de dos formas posibles:
+//   1. Ya viene precalculado como "totalLikes" en el snapshot liviano de
+//      feedHome (usado en index.html) — ver mapearSnapshotArtista /
+//      mapearSnapshotProductor en adminDb.js y su espejo en el script
+//      scripts/actualizar-feed.js que corre por GitHub Actions.
+//   2. Si no viene ese campo pero sí el array "temas" completo (perfil
+//      cargado entero, ej. explorar.html), se deriva sumando likesCount
+//      de cada tema, igual que hace artista.js/productor.js al pintar la
+//      cabecera del perfil individual.
+// Si ninguna de las dos está disponible, se devuelve null y la tarjeta
+// simplemente omite el badge de "Me gusta" en vez de mostrar un cero
+// engañoso.
+function calcularLikesTotalPerfil(perfil) {
+    if (typeof perfil.totalLikes === 'number') return perfil.totalLikes;
+    if (Array.isArray(perfil.temas)) {
+        return perfil.temas.reduce((suma, tema) => suma + (tema.likesCount || 0), 0);
+    }
+    return null;
+}
+
+// Bloque compacto de estadísticas (Seguidores + opcionalmente Me gusta),
+// pensado para ubicarse junto al nombre del perfil en la misma fila
+// (ver uso con "flex justify-between" en renderizarArtistas/Productores).
+// Seguidores siempre está disponible (seguidoresCount viene en ambos
+// snapshots, el liviano y el completo); Me gusta solo se pinta cuando
+// calcularLikesTotalPerfil() pudo derivarlo — ver esa función para el
+// porqué. shrink-0 evita que este bloque se comprima cuando el nombre es
+// largo; es el <h3> (con line-clamp-1) el que cede espacio primero.
+function construirBloqueEstadisticas(perfil, colorAcento = 'indigo') {
+    const seguidores = formatearContador(perfil.seguidoresCount || 0);
+    const likesTotal = calcularLikesTotalPerfil(perfil);
+
+    return `
+        <div class="flex items-center gap-2.5 shrink-0 pl-2">
+            <span class="flex items-center gap-1 bg-${colorAcento}-500/10 border border-${colorAcento}-500/20 text-${colorAcento}-300 text-[11px] font-bold px-2 py-1 rounded-lg" title="Seguidores">
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                ${seguidores}
+            </span>
+            ${likesTotal !== null ? `
+            <span class="flex items-center gap-1 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[11px] font-bold px-2 py-1 rounded-lg" title="Me gusta">
+                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                ${formatearContador(likesTotal)}
+            </span>
+            ` : ''}
+        </div>
+    `;
+}
+
 export function renderizarArtistas(artistas, contenedorId, esBiblioteca = false) {
     const contenedor = document.getElementById(contenedorId);
     
@@ -93,7 +156,10 @@ export function renderizarArtistas(artistas, contenedorId, esBiblioteca = false)
                             <span>Creador Verificado</span>
                         </div>
                         ` : ''}
-                        <h3 class="text-xl font-bold text-white group-hover:text-indigo-400 transition line-clamp-1">${nombreSeguro}</h3>
+                        <div class="flex items-start justify-between gap-2">
+                            <h3 class="text-xl font-bold text-white group-hover:text-indigo-400 transition line-clamp-1 min-w-0">${nombreSeguro}</h3>
+                            ${construirBloqueEstadisticas(artista, 'indigo')}
+                        </div>
                         <div class="flex flex-wrap gap-1.5 pt-1">
                             <span class="bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 text-[11px] px-2.5 py-0.5 rounded-full font-medium">${genero}</span>
                             ${generoSecundario ? `<span class="bg-gray-800 text-gray-400 border border-gray-700 text-[11px] px-2.5 py-0.5 rounded-full font-medium">${generoSecundario}</span>` : ''}
@@ -185,7 +251,10 @@ export function renderizarProductores(productores, contenedorId, esBiblioteca = 
                             <span>Productor Verificado</span>
                         </div>
                         ` : ''}
-                        <h3 class="text-xl font-bold text-white group-hover:text-emerald-400 transition line-clamp-1">${nombreSeguro}</h3>
+                        <div class="flex items-start justify-between gap-2">
+                            <h3 class="text-xl font-bold text-white group-hover:text-emerald-400 transition line-clamp-1 min-w-0">${nombreSeguro}</h3>
+                            ${construirBloqueEstadisticas(productor, 'emerald')}
+                        </div>
                         <div class="flex flex-wrap gap-1.5 pt-1">
                             <span class="bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 text-[11px] px-2.5 py-0.5 rounded-full font-medium">${especialidad}</span>
                             ${cantidadTrabajos > 0 ? `<span class="bg-gray-800 text-gray-400 border border-gray-700 text-[11px] px-2.5 py-0.5 rounded-full font-medium">🎵 ${cantidadTrabajos} ${cantidadTrabajos === 1 ? 'trabajo' : 'trabajos'}</span>` : ''}
@@ -263,6 +332,112 @@ function mensajeVacioCanciones() {
     `;
 }
 
+// ==========================================
+// RENDERIZADO DIFERIDO POR PROXIMIDAD (IntersectionObserver)
+// ==========================================
+// En vez de construir el HTML completo (imagen, botones, data-* de cada
+// tarjeta) para TODAS las canciones apenas llega el feed, se pinta un
+// placeholder liviano por canción y solo se construye la tarjeta real
+// cuando ese placeholder se acerca al área visible. "Se acerca" incluye
+// tanto el scroll vertical de la página como el scroll horizontal propio
+// de cada carrusel (overflow-x-auto): el IntersectionObserver recorta
+// automáticamente contra los contenedores con overflow que haya en el
+// camino hasta la raíz, así que una tarjeta todavía oculta a la derecha
+// de un carrusel no se considera "visible" aunque la sección sí lo sea.
+//
+// rootMargin agranda ese área "visible" un poco antes de que la tarjeta
+// entre en pantalla, para que la carga (miniatura de YouTube, etc.)
+// ya esté en curso cuando el usuario la alcanza con el scroll.
+
+const OBSERVER_ROOT_MARGIN = '600px 300px 600px 300px'; // arriba/abajo, derecha, abajo, izquierda
+let observadorTarjetas = null;
+
+// Callback opcional para que la página que use este módulo pueda
+// reaccionar cada vez que un placeholder se convierte en tarjeta real
+// (ej. canciones.js lo usa para reaplicar el estado visual de "me gusta"
+// sobre la tarjeta recién insertada — aplicarEstadoDeLikesEnDOM() solo
+// alcanza a las tarjetas que ya existen en el DOM en el momento en que se
+// llama, y con renderizado diferido eso ya no es "todas de una vez").
+let notificarTarjetaRenderizada = null;
+
+export function alRenderizarTarjetaDiferida(callback) {
+    notificarTarjetaRenderizada = typeof callback === 'function' ? callback : null;
+}
+
+function obtenerObservadorTarjetas() {
+    if (observadorTarjetas) return observadorTarjetas;
+    if (typeof IntersectionObserver === 'undefined') return null;
+
+    observadorTarjetas = new IntersectionObserver((entradas, observer) => {
+        entradas.forEach(entrada => {
+            if (!entrada.isIntersecting) return;
+            observer.unobserve(entrada.target);
+            reemplazarPlaceholderPorTarjeta(entrada.target);
+        });
+    }, {
+        root: null,
+        rootMargin: OBSERVER_ROOT_MARGIN,
+        threshold: 0
+    });
+
+    return observadorTarjetas;
+}
+
+function reemplazarPlaceholderPorTarjeta(marcador) {
+    const crudo = marcador.dataset.cancion;
+    if (!crudo) { marcador.remove(); return; }
+
+    let cancion;
+    try {
+        cancion = JSON.parse(crudo);
+    } catch {
+        marcador.remove();
+        return;
+    }
+
+    const dentroDeCarrusel = marcador.dataset.carrusel === '1';
+    const html = construirTarjetaCancion(cancion, dentroDeCarrusel);
+
+    if (html) {
+        marcador.outerHTML = html;
+        notificarTarjetaRenderizada?.();
+    } else {
+        marcador.remove();
+    }
+}
+
+// Alto aproximado de una tarjeta ya renderizada (miniatura 10rem + bloque
+// de info), solo para que el placeholder reserve un espacio parecido y el
+// reemplazo no produzca un salto de layout perceptible.
+const ALTO_PLACEHOLDER_TARJETA = 'h-[21rem]';
+
+function construirPlaceholderTarjeta(cancion, dentroDeCarrusel) {
+    let cancionJSON;
+    try {
+        cancionJSON = JSON.stringify(cancion);
+    } catch {
+        return '';
+    }
+    const claseAncho = dentroDeCarrusel ? 'w-[280px] md:w-[320px] shrink-0 snap-center' : 'w-full';
+
+    return `<div class="${claseAncho} ${ALTO_PLACEHOLDER_TARJETA} rounded-2xl bg-[#1e293b] border border-gray-800 animate-pulse" data-cancion="${escapeHTML(cancionJSON)}" data-carrusel="${dentroDeCarrusel ? '1' : '0'}"></div>`;
+}
+
+// Engancha el observador a todos los placeholders recién insertados dentro
+// de un contenedor. Si el navegador no soporta IntersectionObserver (muy
+// raro hoy en día), se renderizan de inmediato como respaldo.
+function observarTarjetasEnContenedor(contenedor) {
+    const marcadores = contenedor.querySelectorAll('[data-cancion]');
+    const observer = obtenerObservadorTarjetas();
+
+    if (!observer) {
+        marcadores.forEach(reemplazarPlaceholderPorTarjeta);
+        return;
+    }
+
+    marcadores.forEach(marcador => observer.observe(marcador));
+}
+
 /**
  * Construye el HTML de UNA tarjeta de canción a partir del snapshot ya
  * aplanado que genera actualizarFeedCanciones() (ver adminDb.js) y guarda
@@ -328,13 +503,16 @@ function construirTarjetaCancion(cancion, dentroDeCarrusel) {
                 <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     
                     <!-- BOTÓN PLAY PREMIUM OSCURO: De 500 a 900 para un contraste brutal -->
-                    <button class="btn-flotante bg-gradient-to-br from-${colorAcento}-500 to-${colorAcento}-900 text-white rounded-full p-3 shadow-lg shadow-${colorAcento}-700/50 border border-white/20 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 hover:from-${colorAcento}-400 hover:to-${colorAcento}-800 hover:scale-110 focus:outline-none"
-                            data-video-id="${videoIdSeguro}"
-                            data-cancion-id="${cancionIdSeguro}"
-                            data-titulo="${nombreCancion}"
-                            data-subtitulo="${nombrePerfil}"
-                            data-foto="${fotoPerfil}"
-                            title="Reproducir en GGmusic">
+                   <button class="btn-flotante bg-gradient-to-br from-${colorAcento}-500 to-${colorAcento}-900 text-white rounded-full p-3 shadow-lg shadow-${colorAcento}-700/50 border border-white/20 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 hover:from-${colorAcento}-400 hover:to-${colorAcento}-800 hover:scale-110 focus:outline-none"
+                        data-video-id="${videoIdSeguro}"
+                        data-cancion-id="${cancionIdSeguro}"
+                        data-perfil-id="${idPerfil}"
+                        data-pagina-perfil="${paginaPerfil}"
+                        data-titulo="${nombreCancion}"
+                        data-subtitulo="${nombrePerfil}"
+                        data-foto="${fotoPerfil}"
+                        data-likes="${cancion.likesCount || 0}"
+                        title="Reproducir en GGmusic">
                         <svg class="w-7 h-7 ml-1 drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M4 4l12 6-12 6V4z"></path>
                         </svg>
@@ -393,13 +571,18 @@ export function renderizarCanciones(canciones, contenedorId) {
     const contenedor = document.getElementById(contenedorId);
     if (!contenedor) return;
 
-    if (!canciones || canciones.length === 0) {
+    // Se descartan de entrada las canciones sin un video de YouTube
+    // reconocible (construirTarjetaCancion tampoco las pintaría), así el
+    // placeholder solo se crea para las que sí van a tener tarjeta.
+    const validas = (canciones || []).filter(c => obtenerIdYouTubeRender(c.url));
+
+    if (validas.length === 0) {
         contenedor.innerHTML = mensajeVacioCanciones();
         return;
     }
 
-    const htmlTarjetas = canciones.map(c => construirTarjetaCancion(c, false)).join('');
-    contenedor.innerHTML = htmlTarjetas || mensajeVacioCanciones();
+    contenedor.innerHTML = validas.map(c => construirPlaceholderTarjeta(c, false)).join('');
+    observarTarjetasEnContenedor(contenedor);
 }
 
 /**
@@ -421,11 +604,13 @@ export function renderizarCancionesHorizontal(canciones, contenedorId) {
 
     contenedor.className = "flex overflow-x-auto gap-6 pb-6 snap-x scrollbar-thin scrollbar-thumb-slate-700";
 
-    if (!canciones || canciones.length === 0) {
+    const validas = (canciones || []).filter(c => obtenerIdYouTubeRender(c.url));
+
+    if (validas.length === 0) {
         contenedor.innerHTML = mensajeVacioCanciones();
         return;
     }
 
-    const htmlTarjetas = canciones.map(c => construirTarjetaCancion(c, true)).join('');
-    contenedor.innerHTML = htmlTarjetas || mensajeVacioCanciones();
+    contenedor.innerHTML = validas.map(c => construirPlaceholderTarjeta(c, true)).join('');
+    observarTarjetasEnContenedor(contenedor);
 }

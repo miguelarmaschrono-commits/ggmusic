@@ -66,7 +66,7 @@ function renderizarListaTemas() {
     const opcionesGeneros = [
         'Musica Urbana', 'Rap / Hip-Hop', 'Trap / Drill', 'Reggaeton',
         'Afrogaita', 'Afrobeat', 'Pop', 'Rock / Alternativo',
-        'R&B', 'Salsa / Caribeño', 'Jazz', 'Joropo'
+        'R&B','Deep House', 'Salsa / Caribeño', 'Jazz', 'Joropo'
     ];
 
     listaTemas.forEach((item, index) => {

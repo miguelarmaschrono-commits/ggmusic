@@ -134,9 +134,14 @@
                 </h2>
 
                 <div id="contenedor-video" class="bg-slate-900/80 rounded-3xl overflow-hidden border border-slate-800 shadow-2xl backdrop-blur-xl transition-all">
-                    <div class="relative w-full pb-[56.25%] bg-black">
-                        <iframe id="iframe-youtube" class="absolute top-0 left-0 w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                    </div>
+                    <button type="button" id="btn-flotante-destacado" class="btn-flotante relative w-full pb-[56.25%] bg-black block group/play focus:outline-none">
+                        <img id="miniatura-destacado" src="" alt="" class="absolute top-0 left-0 w-full h-full object-cover" loading="lazy">
+                        <div class="absolute inset-0 bg-black/30 group-hover/play:bg-black/50 transition-colors flex items-center justify-center">
+                            <span class="w-20 h-20 rounded-full bg-indigo-600/90 group-hover/play:bg-indigo-500 shadow-xl flex items-center justify-center transition-transform group-hover/play:scale-110">
+                                <svg class="w-8 h-8 text-white translate-x-1" fill="currentColor" viewBox="0 0 20 20"><path d="M6 4l10 6-10 6V4z"></path></svg>
+                            </span>
+                        </div>
+                    </button>
                     
                     <div id="contenedor-meta-destacado" class="p-5 hidden bg-slate-900/90 border-t border-slate-800/80">
                         <div class="flex justify-between items-center gap-4">

@@ -321,3 +321,64 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Sin caché, o caché vencida: pedir el snapshot real.
     await cargarFeedDesdeFirestore(!!cache);
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+  const shareBtn = document.getElementById('share-btn');
+
+  if (!shareBtn) return; // Evita errores si el botón no está en esta vista
+
+  shareBtn.addEventListener('click', async () => {
+    const shareData = {
+      title: 'GGmusic',
+      text: '¡Escucha la movida local de Venezuela en GGmusic!',
+      url: 'https://ggy-music.web.app',
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        // Ignora el error si el usuario solo canceló la ventana nativa
+        if (err.name !== 'AbortError') {
+          console.error('Error al compartir:', err);
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareData.url);
+        
+        // Feedback visual rápido (modifica solo el <span> para preservar el icono SVG)
+        const spanTexto = shareBtn.querySelector('span');
+        if (spanTexto) {
+          const textoOriginal = spanTexto.innerText;
+          spanTexto.innerText = '¡Enlace copiado!';
+          setTimeout(() => { spanTexto.innerText = textoOriginal; }, 2000);
+        }
+      } catch (err) {
+        console.error('Error al copiar:', err);
+      }
+    }
+  });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const btnCopiar = document.getElementById('btn-copiar-datos-donacion');
+
+    if (btnCopiar) {
+        btnCopiar.addEventListener('click', async () => {
+            const textoDatos = "Pago Móvil BDV (0102)\nCI: V-32214453\nTeléfono: 04129315220";
+            
+            try {
+                await navigator.clipboard.writeText(textoDatos);
+                const span = btnCopiar.querySelector('span');
+                if (span) {
+                    const original = span.innerText;
+                    span.innerText = '¡Copiado!';
+                    setTimeout(() => { span.innerText = original; }, 2000);
+                }
+            } catch (err) {
+                console.error('Error al copiar datos:', err);
+            }
+        });
+    }
+});

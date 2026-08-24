@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.web.ggy_music.twa",
+        "sha256_cert_fingerprints": ["10:AF:74:64:78:DC:D0:B2:96:80:45:D3:D8:7D:72:CB:11:77:96:4E:FC:91:B9:C7:A5:3C:99:86:14:33:AB:09"]
+      }
+    }]

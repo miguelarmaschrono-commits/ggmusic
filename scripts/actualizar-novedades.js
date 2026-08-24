@@ -114,8 +114,8 @@ async function ejecutarActualizaciónFeedCanciones() {
 
         // 3. Top por Rangos de Likes
         const configuracionRangos = [
-            { id: 'rango-10-50', titulo: '🔈 En Ascenso (5 - 50 Likes)', min: 5, max: 50, limite: 5 },
-            { id: 'rango-51-200', titulo: '🔉 Populares (51 - 200 Likes)', min: 51, max: 200, limite: 8 },
+            { id: 'rango-10-50', titulo: '🔈 En Ascenso (10 - 50 Likes)', min: 10, max: 50, limite: 10 },
+            { id: 'rango-51-200', titulo: '🔉 Populares (51 - 200 Likes)', min: 51, max: 200, limite: 10 },
             { id: 'rango-201-500', titulo: '🔊 Hits (201 - 500 Likes)', min: 201, max: 500, limite: 10 },
             { id: 'rango-501-1000', titulo: '📡 Leyendas (501 - 1000 Likes)', min: 501, max: 1000, limite: 15 }
         ];

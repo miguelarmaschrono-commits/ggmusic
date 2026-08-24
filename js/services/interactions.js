@@ -1,4 +1,5 @@
-import { db } from '../firebase-config.js';
+import { auth, db } from '../firebase-config.js';
+import { sincronizarLikesEnPagina, sincronizarLikeDesdePagina } from './floatingPlayer.js';
 import { 
     doc, 
     setDoc, 
@@ -10,6 +11,25 @@ import {
     arrayRemove,
     runTransaction
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+// NOTA DE UNIFICACIÓN (ver inicializarLikesEnTarjetas más abajo): antes
+// cada página (canciones.js, artista.js) tenía su propia copia casi
+// idéntica de esta lógica — un listener de clic en '.btn-like', su propio
+// arreglo "misLikesConocidos" en memoria, y su propia forma (ligeramente
+// distinta) de leer data-cancion-id. Eso generaba dos riesgos reales:
+// 1) Desincronización: una página podía marcar "ya te gusta" con un
+//    criterio y otra con otro.
+// 2) Doble-toggle: si alguna vez dos listeners quedaban activos a la vez
+//    sobre el mismo botón, un solo clic invocaba toggleLikeCancion() dos
+//    veces y el like se revertía solo.
+// Ahora todo vive en un único lugar: este archivo mantiene el caché de
+// "mis likes" en memoria (misLikesConocidos) y expone un único punto de
+// entrada — inicializarLikesEnTarjetas() — que cualquier página llama UNA
+// sola vez. Las páginas que necesiten una reacción adicional (ej.
+// artista.js actualizando el contador agregado "Me gusta" del perfil)
+// escuchan el evento 'gg:like-actualizado' en vez de reimplementar el
+// clic.
+let misLikesConocidos = [];
 
 // ==========================================
 // 1. GESTIÓN DE SEGUIDORES (FOLLOWERS)
@@ -112,35 +132,196 @@ export async function toggleSeguirArtista(uidOyente, uidDestino) {
 // ==========================================
 
 /**
- * Verificar si un usuario le dio like a una canción.
- * Se conserva como utilidad puntual (consultar UN tema específico), pero
- * ya NO se usa en un loop por cada botón en pantalla — para eso existe
- * obtenerMisLikes() más abajo, que resuelve el estado de TODOS los
- * botones con una sola lectura.
+ * Verificar si un usuario le dio like a una canción consultando su array personal.
  */
 export async function tieneLikeCancion(uidUsuario, cancionId) {
     if (!uidUsuario || !cancionId) return false;
     try {
-        const likeRef = doc(db, "likes_canciones", `${uidUsuario}_${cancionId}`);
-        const snap = await getDoc(likeRef);
-        return snap.exists();
+        const snap = await getDoc(doc(db, "usuarios", uidUsuario));
+        if (snap.exists() && Array.isArray(snap.data().likesCanciones)) {
+            return snap.data().likesCanciones.includes(cancionId);
+        }
+        return false;
     } catch (error) {
-        console.error("Error al verificar like:", error);
+        console.error("Error al verificar me gusta:", error);
         return false;
     }
 }
+/**
+ * Helper de toast reutilizado por este módulo. Todas las páginas que
+ * tienen tarjetas de canciones (canciones.html, artista.html) ya
+ * comparten el mismo par de IDs #toast / #toast-mensaje en su HTML, así
+ * que un servicio de datos puede usarlos directamente sin necesidad de
+ * que cada página le pase su propia función de toast. Si esos elementos
+ * no existen en la página (ej. una futura vista sin ese markup), no rompe
+ * nada — simplemente no se muestra nada.
+ */
+let toastLikeTimeoutId = null;
+function mostrarToastLike(mensaje, tipo = 'warn') {
+    const toast = document.getElementById('toast');
+    const toastMensaje = document.getElementById('toast-mensaje');
+    if (!toast || !toastMensaje) return;
+
+    const estilosPorTipo = {
+        warn: { clase: 'bg-[#8d001c]', icono: '🔔 ' },
+        error: { clase: 'bg-[#DC143C]', icono: '⚠️ ' }
+    };
+    const { clase, icono } = estilosPorTipo[tipo] || estilosPorTipo.warn;
+
+    toast.classList.remove('bg-rose-600', 'bg-indigo-600', 'bg-amber-500', 'bg-red-600', 'bg-[#DC143C]', 'bg-[#8d001c]');
+    toast.classList.add(clase);
+    toastMensaje.textContent = `${icono}${mensaje}`;
+
+    toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+    toast.classList.add('translate-y-0', 'opacity-100');
+
+    clearTimeout(toastLikeTimeoutId);
+    toastLikeTimeoutId = setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+    }, 2500);
+}
 
 /**
- * Devuelve la lista de cancionId a los que el usuario ya le dio like,
- * leyendo su propio documento de perfil (usuarios/{uid}) UNA SOLA VEZ.
+ * Consulta local (sin red) contra el caché de likes ya cargado por
+ * inicializarLikesEnTarjetas(). Pensada para que otras páginas (ej.
+ * canciones.js al armar la cola del reproductor flotante) puedan saber
+ * "¿esta canción ya la tiene marcada el usuario?" sin mantener su propia
+ * copia del arreglo ni volver a pedirlo a Firestore.
+ */
+export function tieneLikeLocal(cancionId) {
+    return Array.isArray(misLikesConocidos) && misLikesConocidos.includes(cancionId);
+}
+
+/**
+ * Pinta (o repinta) el estado visual de "me gusta" sobre TODOS los
+ * botones .btn-like presentes en el DOM en este momento, usando el
+ * caché en memoria. Se exporta para que una página pueda invocarlo de
+ * nuevo después de renderizar tarjetas nuevas (ej. tras una revalidación
+ * de Firestore, o un resultado de búsqueda) sin tener que reimplementar
+ * el criterio de "cuáles cuentan como ya likeadas" — un único criterio,
+ * usado en todos lados.
+ */
+export function aplicarEstadoDeLikesEnDOM() {
+    document.querySelectorAll('.btn-like').forEach(btn => {
+        const cancionId = btn.getAttribute('data-cancion-id');
+        if (!cancionId) return;
+        const yaLeGusta = tieneLikeLocal(cancionId);
+
+        const icono = btn.querySelector('.icono-like') || btn.querySelector('svg');
+        if (icono) {
+            icono.classList.toggle('text-rose-500', yaLeGusta);
+            icono.classList.toggle('fill-current', yaLeGusta);
+            icono.classList.toggle('text-slate-400', !yaLeGusta);
+        }
+        btn.setAttribute('data-liked', yaLeGusta ? 'true' : 'false');
+    });
+}
+
+/**
+ * PUNTO DE ENTRADA ÚNICO para toda interacción de "me gusta" en el sitio.
+ * Cada página lo llama UNA sola vez al iniciar (ver canciones.js,
+ * artista.js). Se encarga de:
+ *   1. Cargar (y mantener actualizado) el caché de canciones que el
+ *      usuario ya likeó, y pintarlo sobre cualquier tarjeta presente.
+ *   2. Escuchar TODOS los clics en '.btn-like' del documento (delegación
+ *      a nivel body — funciona con tarjetas ya presentes o renderizadas
+ *      después, sin volver a registrar nada).
+ *   3. Tras cada toggle exitoso: actualizar el caché local, sincronizar
+ *      TODAS las tarjetas de esa misma canción en la página
+ *      (sincronizarLikesEnPagina, ver floatingPlayer.js) y el
+ *      reproductor flotante si está sonando esa canción
+ *      (sincronizarLikeDesdePagina).
+ *   4. Emitir 'gg:like-actualizado' en document — para que una página con
+ *      UI adicional dependiente del like (ej. el contador agregado
+ *      "Me gusta" del perfil en artista.js) reaccione sin volver a tocar
+ *      Firestore ni reimplementar el clic.
  *
- * Antes, pintar el estado de like de un perfil con N temas costaba N
- * lecturas a "likes_canciones" (una por botón, en un for...of secuencial).
- * Ahora, toggleLikeCancion() mantiene sincronizado un array denormalizado
- * "likesCanciones" dentro del propio perfil del oyente — el mismo patrón
- * que ya usan favoritosArtistas/favoritosProductores para la biblioteca.
- * Con eso, una única lectura basta sin importar cuántos temas tenga el
- * artista que se está visitando.
+ * IMPORTANTE: ninguna página debe registrar su propio listener de clic
+ * para '.btn-like' además de este — harían doble toggle por clic (el like
+ * se marcaría y desmarcaría en el mismo gesto).
+ */
+export function inicializarLikesEnTarjetas() {
+    if (!auth) return;
+
+    auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+            misLikesConocidos = [];
+            aplicarEstadoDeLikesEnDOM();
+            return;
+        }
+        try {
+            misLikesConocidos = await obtenerMisLikes(user.uid);
+            aplicarEstadoDeLikesEnDOM();
+        } catch (error) {
+            console.error("Error al cargar mis likes:", error);
+        }
+    });
+
+    document.body.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.btn-like');
+        if (!btn) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const cancionId = btn.getAttribute('data-cancion-id');
+        if (!cancionId) return;
+
+        const user = auth.currentUser;
+        if (!user) {
+            mostrarToastLike("Debes iniciar sesión para dar me gusta.", 'warn');
+            return;
+        }
+
+        // Deshabilitar TODAS las tarjetas de esta misma canción (puede
+        // haber más de una visible a la vez: la tarjeta del feed y el
+        // reproductor flotante, o dos carruseles distintos) para evitar
+        // que un doble clic dispare dos transacciones concurrentes.
+        const tarjetasRelacionadas = document.querySelectorAll(`.btn-like[data-cancion-id="${cancionId}"]`);
+        tarjetasRelacionadas.forEach(b => b.disabled = true);
+
+        try {
+            const res = await toggleLikeCancion(user.uid, cancionId);
+
+            if (res && res.exito) {
+                const nuevoTotal = res.totalLikes ?? 0;
+
+                // 1. Actualizar el caché local — así una tarjeta nueva que
+                // se renderice después de este clic (ej. tras cambiar de
+                // filtro) ya nace marcada correctamente.
+                misLikesConocidos = res.liked
+                    ? [...new Set([...misLikesConocidos, cancionId])]
+                    : misLikesConocidos.filter(id => id !== cancionId);
+
+                // 2. Sincronizar TODAS las tarjetas de esta canción en la
+                // página (icono + contador), sin importar en qué carrusel
+                // o sección estén repetidas.
+                sincronizarLikesEnPagina(cancionId, res.liked, nuevoTotal);
+
+                // 3. Sincronizar el reproductor flotante si está sonando
+                // esta misma canción en este momento.
+                sincronizarLikeDesdePagina(cancionId, res.liked, nuevoTotal);
+
+                // 4. Avisar a quien quiera reaccionar de forma adicional
+                // (ej. el contador agregado de "Me gusta" del perfil).
+                document.dispatchEvent(new CustomEvent('gg:like-actualizado', {
+                    detail: { cancionId, liked: res.liked, totalLikes: nuevoTotal }
+                }));
+            } else if (res && res.mensaje) {
+                mostrarToastLike(res.mensaje, 'error');
+            }
+        } catch (error) {
+            console.error("Error al procesar el like desde la tarjeta:", error);
+            mostrarToastLike("Ocurrió un error al procesar el me gusta.", 'error');
+        } finally {
+            tarjetasRelacionadas.forEach(b => b.disabled = false);
+        }
+    });
+}
+
+/**
+ * Devuelve la lista de cancionId a los que el usuario ya le dio like.
  */
 export async function obtenerMisLikes(uidUsuario) {
     if (!uidUsuario) return [];
@@ -157,12 +338,7 @@ export async function obtenerMisLikes(uidUsuario) {
 }
 
 /**
- * Extrae el ID de video de YouTube (11 caracteres) de una URL, ya venga en
- * formato embed (.../embed/ID) o en cualquiera de los formatos "crudos"
- * (watch?v=, youtu.be/, shorts/...). Misma lógica que ya usan artista.js y
- * productor.js para lo mismo — se replica aquí (en vez de importarla) para
- * no crear una dependencia cruzada entre un servicio de datos y un archivo
- * de UI de página.
+ * Extrae el ID de video de YouTube (11 caracteres) de una URL.
  */
 function extraerIdYouTube(url) {
     if (!url) return null;
@@ -175,13 +351,10 @@ function extraerIdYouTube(url) {
 }
 
 /**
- * Descompone un cancionId (formado como `${perfilId}_${videoId}`, ver
- * artista.js/productor.js) en sus dos partes. El uid de Firebase Auth no
- * contiene guiones bajos, así que el PRIMER '_' marca de forma segura el
- * límite entre el id del perfil y el id del video de YouTube (que sí puede
- * contener '_' o '-').
+ * Descompone un cancionId (formado como `${perfilId}_${videoId}`).
  */
 function descomponerCancionId(cancionId) {
+    if (typeof cancionId !== 'string') return null;
     const indice = cancionId.indexOf('_');
     if (indice === -1) return null;
     return {
@@ -191,67 +364,50 @@ function descomponerCancionId(cancionId) {
 }
 
 /**
- * Alternar Like en Canción (Dar / Quitar Like)
- *
- * CAMBIO DE ESQUEMA: ya no existe una colección "canciones" aparte para
- * guardar el conteo. El likesCount vive directamente dentro del objeto
- * correspondiente en el array "temas" del perfil (usuarios/{perfilId}),
- * junto a nombre/fecha/genero/url. Motivo: el perfil del artista o
- * productor YA se lee completo en una sola consulta al cargar la página
- * (obtenerPerfilArtista/obtenerPerfilProductor) — antes, cada tema exigía
- * además 1 lectura a "canciones" (conteo) y 1 lectura a "likes_canciones"
- * (¿le di like?) SOLO para pintar el número. Con el conteo fusionado en el
- * propio documento del perfil, esas N lecturas de "canciones" desaparecen
- * por completo: el número ya viaja gratis con el resto del perfil.
- *
- * Firestore no permite un increment() atómico sobre un campo dentro de un
- * elemento de un array, así que la actualización se hace con una
- * transacción: se lee el documento completo, se localiza el tema por su
- * ID de YouTube (no por URL exacta, para tolerar diferencias de formato),
- * se reescribe SOLO ese elemento con el likesCount ajustado, y se guarda
- * el array entero de vuelta — todo en un solo paso atómico junto con el
- * alta/baja del registro en "likes_canciones" (que se conserva únicamente
- * para poder responder "¿este usuario ya le dio like a esto?").
+ * Alternar Like en Canción (Dar / Quitar Like) de forma atómica.
  */
 export async function toggleLikeCancion(uidUsuario, cancionId) {
     if (!uidUsuario || !cancionId) return { exito: false, mensaje: "Debes iniciar sesión" };
 
     const partes = descomponerCancionId(cancionId);
     if (!partes) return { exito: false, mensaje: "Identificador de canción inválido" };
-    const { videoId } = partes;
+    const { perfilId, videoId } = partes;
 
-    const perfilRef = doc(db, "usuarios", partes.perfilId);
+    const perfilRef = doc(db, "usuarios", perfilId);
     const oyenteRef = doc(db, "usuarios", uidUsuario);
 
     try {
         let quedoConLike = false;
+        let nuevoTotalLikes = 0;
 
         await runTransaction(db, async (transaction) => {
-            // Lecturas primero (regla de las transacciones de Firestore)
             const perfilSnap = await transaction.get(perfilRef);
             const oyenteSnap = await transaction.get(oyenteRef);
 
             if (!perfilSnap.exists()) {
-                throw new Error("El perfil dueño de esta canción ya no existe.");
+                throw new Error("El perfil dueño de esta canción no existe.");
             }
 
             const datosPerfil = perfilSnap.data();
             const temas = Array.isArray(datosPerfil.temas) ? [...datosPerfil.temas] : [];
-            const indiceTema = temas.findIndex(t => extraerIdYouTube(t.url) === videoId);
+            const indiceTema = temas.findIndex(t => t?.url && extraerIdYouTube(t.url) === videoId);
 
             if (indiceTema === -1) {
-                throw new Error("El tema ya no existe en el perfil (pudo haber sido eliminado).");
+                throw new Error("El tema ya no existe en el perfil.");
             }
 
             const misLikesActuales = (oyenteSnap.exists() && Array.isArray(oyenteSnap.data().likesCanciones))
                 ? oyenteSnap.data().likesCanciones
                 : [];
+                
             const yaLeGustaba = misLikesActuales.includes(cancionId);
             const likesActuales = temas[indiceTema].likesCount || 0;
 
+            nuevoTotalLikes = Math.max(0, likesActuales + (yaLeGustaba ? -1 : 1));
+
             temas[indiceTema] = {
                 ...temas[indiceTema],
-                likesCount: Math.max(0, likesActuales + (yaLeGustaba ? -1 : 1))
+                likesCount: nuevoTotalLikes
             };
 
             transaction.update(perfilRef, { temas });
@@ -262,9 +418,9 @@ export async function toggleLikeCancion(uidUsuario, cancionId) {
             quedoConLike = !yaLeGustaba;
         });
 
-        return { exito: true, liked: quedoConLike };
+        return { exito: true, liked: quedoConLike, totalLikes: nuevoTotalLikes };
     } catch (error) {
-        console.error("Error al procesar el like:", error);
+        console.error("Error al procesar el me gusta:", error);
         return { exito: false, mensaje: error.message };
     }
 }
