@@ -55,6 +55,35 @@ function mapearSnapshotProductor(p) {
 }
 
 // ==========================================
+// RANKING
+// ==========================================
+
+function calcularScoreRanking(perfil) {
+    const seguidores = perfil.seguidoresCount || 0;
+    const likes = typeof perfil.totalLikes === 'number'
+        ? perfil.totalLikes
+        : calcularTotalLikes(perfil.temas);
+    return (seguidores * 2) + likes;
+}
+
+function compararPorScoreYNombre(a, b) {
+    const scoreA = calcularScoreRanking(a);
+    const scoreB = calcularScoreRanking(b);
+    if (scoreB !== scoreA) return scoreB - scoreA;
+    return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
+}
+
+function compararPorMenosSeguidores(a, b) {
+    const seguidoresA = a.seguidoresCount || 0;
+    const seguidoresB = b.seguidoresCount || 0;
+    if (seguidoresA !== seguidoresB) return seguidoresA - seguidoresB;
+    return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
+}
+
+const LIMITE_TOP = 30;
+const LIMITE_EMERGENTES = 10;
+
+// ==========================================
 // PROCESAMIENTO
 // ==========================================
 
@@ -67,7 +96,7 @@ async function procesarRol(rolNombre) {
     const lista = [];
     snapshot.forEach(doc => {
         const data = doc.data();
-        if (data.activo !== false && data.suspendido !== true) { // Excluir desactivados o suspendidos
+        if (data.suspendido !== true) { // Mantener el mismo criterio que actualizarFeedHome()
             const perfilConId = { id: doc.id, ...data };
             
             // Se aplica el mapper correspondiente según el rol
@@ -79,28 +108,20 @@ async function procesarRol(rolNombre) {
         }
     });
 
-    // 2. Ordenar por seguidores (desc) y desempate por nombre
-    lista.sort((a, b) => {
-        const segA = a.seguidoresCount || 0;
-        const segB = b.seguidoresCount || 0;
-        if (segB !== segA) return segB - segA;
-        return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
-    });
+    // 2. Ordenar con el mismo score combinado que actualizarFeedHome()
+    lista.sort(compararPorScoreYNombre);
 
-    // 3. Extraer Top 15
-    const top15 = lista.slice(0, 15);
+    // 3. Extraer Top 30
+    const top30 = lista.slice(0, LIMITE_TOP);
 
-    // 4. Extraer Talento Emergente (los 5 con menos seguidores fuera del Top 15)
-    const fueraDelTop = lista.slice(15);
-    fueraDelTop.sort((a, b) => {
-        const segA = a.seguidoresCount || 0;
-        const segB = b.seguidoresCount || 0;
-        if (segA !== segB) return segA - segB; // Ascendente (menos seguidores primero)
-        return (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' });
-    });
-    const emergentes = fueraDelTop.slice(0, 5);
+    // 4. Extraer Talento Emergente fuera del Top 30
+    const idsEnTop = new Set(top30.map(perfil => perfil.id));
+    const emergentes = lista
+        .filter(perfil => !idsEnTop.has(perfil.id))
+        .sort(compararPorMenosSeguidores)
+        .slice(0, LIMITE_EMERGENTES);
 
-    return { top15, emergentes };
+    return { top30, emergentes, totalConsiderados: snapshot.size };
 }
 
 async function ejecutar() {
@@ -113,17 +134,19 @@ async function ejecutar() {
         ]);
 
         const snapshotFeed = {
-            artistas: artistasData.top15,
-            productores: productoresData.top15,
+            artistas: artistasData.top30,
+            productores: productoresData.top30,
             menosSeguidosArtistas: artistasData.emergentes,
             menosSeguidosProductores: productoresData.emergentes,
-            actualizadoEn: admin.firestore.FieldValue.serverTimestamp()
+            actualizadoEn: admin.firestore.FieldValue.serverTimestamp(),
+            totalArtistasConsiderados: artistasData.totalConsiderados,
+            totalProductoresConsiderados: productoresData.totalConsiderados
         };
 
         // Sobrescribir el documento central en Firestore
         await db.collection('feedHome').doc('actual').set(snapshotFeed);
 
-        console.log("✅ ¡Feed de inicio (Top 15 + Emergentes) actualizado con éxito!");
+        console.log("✅ ¡Feed de inicio (Top 30 + Emergentes) actualizado con éxito!");
         process.exit(0);
 
     } catch (error) {

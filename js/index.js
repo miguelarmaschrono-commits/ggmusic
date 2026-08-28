@@ -7,8 +7,8 @@
 // manualmente desde admin.html (botón "Actualizar Feed", ver
 // services/adminDb.js: actualizarFeedHome). El snapshot ya viene ordenado
 // (por seguidoresCount desc, empate -> alfabético) y recortado a 15 por
-// rol, además de un bloque adicional de "Talento Emergente" (los 5 con
-// MENOS seguidores por rol, excluyendo a quienes ya están en el Top 15).
+// rol, además de un bloque adicional de "Talento Emergente" (los perfiles con
+// MENOS seguidores por rol, excluyendo a quienes ya están en el Top 30).
 //
 // CAPA DE CACHÉ LOCAL: como el feed solo cambia cuando el admin lo
 // actualiza manualmente —no es un dato en tiempo real—, no hace falta
@@ -34,12 +34,12 @@ const IDS_ARTISTAS = { oro: 'gridArtistasOro', plata: 'gridArtistasPlata', bronc
 const IDS_PRODUCTORES = { oro: 'gridProductoresOro', plata: 'gridProductoresPlata', bronce: 'gridProductoresBronce' };
 
 // Contenedores de la sección "Talento Emergente" (Top 5 con menos
-// seguidores por rol). Son secciones aparte del Top 15, así que viven
+// seguidores por rol). Son secciones aparte del Top 30, así que viven
 // fuera de los objetos IDS_ARTISTAS / IDS_PRODUCTORES de arriba.
 const ID_ARTISTAS_EMERGENTES = 'gridArtistasEmergentes';
 const ID_PRODUCTORES_EMERGENTES = 'gridProductoresEmergentes';
 
-const CLAVE_CACHE_FEED = 'ggmusic_feed_cache';
+const CLAVE_CACHE_FEED = 'ggmusic_feed_cache_v2';
 const TTL_FEED_MS = 12 * 60 * 60 * 1000; // 24 horas de caché (1 día completo) // 20 minutos de vida antes de revalidar
 
 // ==========================================
@@ -103,7 +103,7 @@ function borrarCacheFeed() {
 // PINTADO
 // ==========================================
 
-// Pinta un bloque individual del Top 15 (oro/plata/bronce). A diferencia
+// Pinta un bloque individual del Top 30 (oro/plata/bronce). A diferencia
 // de la versión anterior, ahora también controla la visibilidad del
 // WRAPPER completo del bloque (el <div class="space-y-3"> que envuelve al
 // <h3> "🥇 Puestos 1 - 5" junto con su grilla): si la sublista que le toca
@@ -112,7 +112,7 @@ function borrarCacheFeed() {
 // sobre una grilla en blanco. document.getElementById(contenedorId) es la
 // grilla misma; su .parentElement es ese wrapper — no hace falta ningún
 // id ni cambio adicional en index.html para lograrlo.
-function pintarBloqueTop15(sublista, contenedorId, renderFn) {
+function pintarBloqueTop30(sublista, contenedorId, renderFn) {
     const contenedor = document.getElementById(contenedorId);
     if (!contenedor) return;
 
@@ -129,13 +129,13 @@ function pintarBloqueTop15(sublista, contenedorId, renderFn) {
 }
 
 function renderizarBloques(lista, ids, renderFn) {
-    pintarBloqueTop15(lista.slice(0, 5), ids.oro, renderFn);
-    pintarBloqueTop15(lista.slice(5, 10), ids.plata, renderFn);
-    pintarBloqueTop15(lista.slice(10, 15), ids.bronce, renderFn);
+    pintarBloqueTop30(lista.slice(0, 10), ids.oro, renderFn);
+    pintarBloqueTop30(lista.slice(10, 20), ids.plata, renderFn);
+    pintarBloqueTop30(lista.slice(20, 30), ids.bronce, renderFn);
 }
 
 // Pinta una sección "opcional" (Talento Emergente): si todavía no hay
-// candidatos disponibles (catálogo pequeño donde el Top 15 ya incluye a
+// candidatos disponibles (catálogo pequeño donde el Top 30 ya incluye a
 // todo el mundo), no reutiliza el mensaje de error de
 // renderizarArtistas/renderizarProductores (ese está pensado para una
 // búsqueda sin resultados, no para "esta sección aún no tiene contenido"),

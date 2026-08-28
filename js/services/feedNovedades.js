@@ -69,7 +69,7 @@ function leerVistos() {
     return leerJSON(CLAVE_VISTOS) || {};
 }
 
-/** Marca la sección "home" (index.html / Top 15) como vista ahora mismo. */
+/** Marca la sección "home" (index.html / Top 30) como vista ahora mismo. */
 export function marcarHomeComoVisto() {
     const vistos = leerVistos();
     vistos.homeVistoMs = Date.now();

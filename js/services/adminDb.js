@@ -139,18 +139,18 @@ export async function ampliarLimite(uid, cantidad) {
 }
 
 // ==========================================
-// 4. FEED DE INICIO (Top 15 + Talento Emergente / snapshot manual)
+// 4. FEED DE INICIO (Top 30 + Talento Emergente / snapshot manual)
 // ==========================================
 // Este documento (feedHome/actual) es lo único que index.html consulta al
 // cargar. Se recalcula bajo demanda (botón "Actualizar Feed" en
 // admin.html), NO en cada visita — así el home no dispara una lectura
 // completa de "usuarios" por cada persona que entra al sitio.
 //
-// Ranking del Top 15: por un "score" combinado (seguidoresCount * 2 + suma
+// Ranking del Top 30: por un "score" combinado (seguidoresCount * 2 + suma
 // de likesCount de todos sus temas) descendente; en caso de empate,
-// prioridad alfabética por nombre. Se recorta a 15 por rol y se guarda ya
-// ordenado, listo para que index.js lo corte en 3 bloques de 5
-// (🥇 1-5, 🥈 6-10, 🥉 11-15) sin tener que volver a ordenar nada del lado
+// prioridad alfabética por nombre. Se recorta a 30 por rol y se guarda ya
+// ordenado, listo para que index.js lo corte en 3 bloques de 10
+// (🥇 1-10, 🥈 11-20, 🥉 21-30) sin tener que volver a ordenar nada del lado
 // del cliente.
 //
 // El peso 2x para seguidores es intencional: seguir a alguien es un
@@ -165,11 +165,11 @@ export async function ampliarLimite(uid, cantidad) {
 // "Talento Emergente" (menosSeguidosArtistas / menosSeguidosProductores):
 // los LIMITE_EMERGENTES perfiles por rol con MENOS seguidores (orden
 // ascendente puro por seguidoresCount, sin el peso de los likes que sí
-// aplica al Top 15, porque aquí el criterio a resaltar es exactamente
+// aplica al Top 30, porque aquí el criterio a resaltar es exactamente
 // ese: quién tiene menos gente siguiéndolo todavía). Se excluye
-// deliberadamente a cualquiera que ya haya quedado dentro del Top 15 — en
+// deliberadamente a cualquiera que ya haya quedado dentro del Top 30 — en
 // un catálogo pequeño, sin esa exclusión, "los de menos seguidores" y "el
-// final del Top 15" exterior tienden a ser casi el mismo grupo de personas, y el
+// final del Top 30" exterior tienden a ser casi el mismo grupo de personas, y el
 // propósito de esta sección (darle una vitrina a quien normalmente no
 // aparece en ningún ranking) se perdería.
 const LIMITE_EMERGENTES = 10;
@@ -205,7 +205,7 @@ function compararPorMenosSeguidores(a, b) {
 }
 
 // Snapshots livianos reutilizables: el mismo "shape" reducido se usa tanto
-// para el Top 15 como para Talento Emergente, así renderizarArtistas /
+// para el Top 30 como para Talento Emergente, así renderizarArtistas /
 // renderizarProductores (ui/render.js) no necesitan ninguna rama especial
 // según qué sección estén pintando.
 function mapearSnapshotArtista(a) {
@@ -253,35 +253,35 @@ export async function actualizarFeedHome() {
         const artistasActivos = artistas.filter(a => a.suspendido !== true);
         const productoresActivos = productores.filter(p => p.suspendido !== true);
 
-        // --- TOP 15 ---
-        const top15Artistas = [...artistasActivos]
+        // --- TOP 30 ---
+        const top30Artistas = [...artistasActivos]
             .sort(compararPorScoreYNombre)
-            .slice(0, 15)
+            .slice(0, 30)
             .map(mapearSnapshotArtista);
 
-        const top15Productores = [...productoresActivos]
+        const top30Productores = [...productoresActivos]
             .sort(compararPorScoreYNombre)
-            .slice(0, 15)
+            .slice(0, 30)
             .map(mapearSnapshotProductor);
 
         // --- TALENTO EMERGENTE (Top LIMITE_EMERGENTES con menos seguidores) ---
-        const idsEnTop15Artistas = new Set(top15Artistas.map(a => a.id));
+        const idsEnTop30Artistas = new Set(top30Artistas.map(a => a.id));
         const menosSeguidosArtistas = artistasActivos
-            .filter(a => !idsEnTop15Artistas.has(a.id))
+            .filter(a => !idsEnTop30Artistas.has(a.id))
             .sort(compararPorMenosSeguidores)
             .slice(0, LIMITE_EMERGENTES)
             .map(mapearSnapshotArtista);
 
-        const idsEnTop15Productores = new Set(top15Productores.map(p => p.id));
+        const idsEnTop30Productores = new Set(top30Productores.map(p => p.id));
         const menosSeguidosProductores = productoresActivos
-            .filter(p => !idsEnTop15Productores.has(p.id))
+            .filter(p => !idsEnTop30Productores.has(p.id))
             .sort(compararPorMenosSeguidores)
             .slice(0, LIMITE_EMERGENTES)
             .map(mapearSnapshotProductor);
 
         await setDoc(doc(db, "feedHome", "actual"), {
-            artistas: top15Artistas,
-            productores: top15Productores,
+            artistas: top30Artistas,
+            productores: top30Productores,
             menosSeguidosArtistas,
             menosSeguidosProductores,
             actualizadoEn: serverTimestamp(),
@@ -291,8 +291,8 @@ export async function actualizarFeedHome() {
 
         return {
             exito: true,
-            totalArtistas: top15Artistas.length,
-            totalProductores: top15Productores.length,
+            totalArtistas: top30Artistas.length,
+            totalProductores: top30Productores.length,
             totalEmergentesArtistas: menosSeguidosArtistas.length,
             totalEmergentesProductores: menosSeguidosProductores.length
         };

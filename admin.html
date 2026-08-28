@@ -127,16 +127,16 @@
                     <span><strong>Nota de gestión:</strong> Un perfil suspendido deja de mostrarse en las exploraciones públicas y páginas de perfil, pero conserva sus datos intactos y puede reactivarse con un clic en cualquier momento.</span>
                 </div>
 
-                <!-- Tarjeta: Feed de Inicio (Top 15 controlado manualmente) -->
+                <!-- Tarjeta: Feed de Inicio (Top 30 controlado manualmente) -->
                 <div class="bg-[#1e293b]/80 border border-slate-800 rounded-2xl p-6 shadow-lg backdrop-blur-sm">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div>
                             <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                                🔄 Feed de Inicio (Top 15)
+                                🔄 Feed de Inicio (Top 30)
                             </h3>
                             <p class="text-xs text-slate-400 mt-1 max-w-xl">
                                 La portada pública NO consulta Firestore en cada visita: muestra una
-                                foto fija de este ranking (top 15 artistas y top 15 productores por
+                                foto fija de este ranking (top 30 artistas y top 30 productores por
                                 seguidores). Actualízala manualmente cuando quieras refrescarla.
                             </p>
                             <p id="feed-ultima-actualizacion" class="text-[11px] text-slate-500 font-mono mt-2">
@@ -358,7 +358,7 @@
         };
 
         // ==========================================
-        // FEED DE INICIO (Top 15 / snapshot manual)
+        // FEED DE INICIO (Top 30 / snapshot manual)
         // ==========================================
         async function cargarEstadoFeed() {
             const el = document.getElementById('feed-ultima-actualizacion');
