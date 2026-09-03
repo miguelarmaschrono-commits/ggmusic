@@ -53,7 +53,16 @@
             <div class="absolute -top-24 -left-24 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
             <div class="absolute -bottom-24 -right-24 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-            <div class="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6">
+            <div class="absolute inset-x-6 top-6 z-20 h-32 overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-950/80 group">
+                <img id="portada-preview" src="" alt="Portada del artista" class="w-full h-full object-cover opacity-80">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/20"></div>
+                <button type="button" id="btn-cambiar-portada" class="absolute bottom-3 right-3 z-10 flex items-center gap-2 bg-slate-950/80 hover:bg-indigo-600 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-2 rounded-lg border border-slate-600/80 hover:border-indigo-400 cursor-pointer transition">
+                    <span id="texto-btn-portada">📷 Cambiar portada</span>
+                </button>
+                <input type="file" id="input-cambiar-portada" accept="image/*" class="hidden">
+            </div>
+
+            <div class="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6 pt-36 md:pt-32">
                 <div class="relative group flex-shrink-0">
                     <div class="p-1 rounded-full bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 shadow-xl shadow-indigo-500/10">
                         <img id="avatar-preview" src="https://ui-avatars.com/api/?name=Artista&background=random" alt="Avatar" class="w-24 h-24 rounded-full object-cover border-2 border-slate-900">
@@ -229,9 +238,26 @@
 
                 <!-- Sección 3 -->
                 <div class="pt-6 border-t border-slate-800/80">
+                    <h4 class="text-xs font-bold text-indigo-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500 shadow-sm shadow-indigo-500"></span> 3. Playlists recomendadas
+                    </h4>
+
+                    <p class="text-xs text-slate-400 mb-4">Agrega varias playlists con nombre, temática y enlace. Se mostrarán en tu perfil como una barra desplegable.</p>
+
+                    <div id="lista-playlists-container" class="space-y-4 mb-4"></div>
+
+                    <button type="button" id="btn-agregar-playlist" class="w-full py-3 px-4 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-bold transition duration-200 flex items-center justify-center gap-2 shadow-sm">
+                        ➕ Agregar Nueva Playlist
+                    </button>
+                    <div id="msg-limite-playlists" class="hidden mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center text-sm text-amber-300">
+                        Has alcanzado el máximo de 10 playlists por artista.
+                    </div>
+                </div>
+
+                <div class="pt-6 border-t border-slate-800/80">
                     <div class="flex justify-between items-center mb-3">
                         <h4 class="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-indigo-500 shadow-sm shadow-indigo-500"></span> 3. Videografía / Temas
+                            <span class="w-2 h-2 rounded-full bg-indigo-500 shadow-sm shadow-indigo-500"></span> 4. Videografía / Temas
                         </h4>
                         <span id="contador-temas" class="text-xs text-indigo-300 font-mono bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20 font-semibold">0 / 10 temas</span>
                     </div>
@@ -266,9 +292,9 @@
                         <span class="w-2 h-2 rounded-full bg-indigo-500 shadow-sm shadow-indigo-500"></span> 4. Biografía
                     </h4>
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1.5 font-medium">Cuéntale a tu público sobre ti (Máximo 150 caracteres)</label>
-                        <textarea id="dash-biografia" maxlength="150" rows="3" placeholder="Ej: Cantante urbano con pasión por..." class="w-full bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 text-slate-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition duration-200 resize-none placeholder-slate-600"></textarea>
-                        <p class="text-[10px] text-slate-500 text-right mt-1 font-mono"><span id="contador-bio">0</span>/150</p>
+                        <label class="block text-xs text-slate-400 mb-1.5 font-medium">Cuéntale a tu público sobre ti (Máximo 300 caracteres)</label>
+                        <textarea id="dash-biografia" maxlength="300" rows="3" placeholder="Ej: Cantante urbano con pasión por..." class="w-full bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 text-slate-200 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition duration-200 resize-none placeholder-slate-600"></textarea>
+                        <p class="text-[10px] text-slate-500 text-right mt-1 font-mono"><span id="contador-bio">0</span>/300</p>
                     </div>
                 </div>
 

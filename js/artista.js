@@ -9,6 +9,93 @@ import { reproducirEnFlotante, establecerCola, reanudarReproduccionAutomatica } 
 const cargando = document.getElementById('cargando-perfil');
 const errorDiv = document.getElementById('error-perfil');
 const contenido = document.getElementById('contenido-perfil');
+
+function limitarTexto(valor, max) {
+    return String(valor ?? '').slice(0, max);
+}
+
+function escapeHTML(texto) {
+    if (texto === null || texto === undefined) return '';
+    return String(texto)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+}
+
+function esUrlValida(url) {
+    if (!url) return false;
+    try {
+        const parsed = new URL(url, window.location.href);
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+        return false;
+    }
+}
+
+function renderizarPlaylistsPublicas(playlists) {
+    const contenedor = document.getElementById('lista-playlists-publica');
+    const seccion = document.getElementById('seccion-playlists');
+    if (!contenedor || !seccion) return;
+
+    const items = Array.isArray(playlists) ? playlists.filter(p => p && p.url && esUrlValida(p.url)) : [];
+
+    if (items.length === 0) {
+        seccion.classList.add('hidden');
+        contenedor.innerHTML = '';
+        return;
+    }
+
+    seccion.classList.remove('hidden');
+    contenedor.innerHTML = items.map((playlist, index) => {
+        const nombre = escapeHTML(limitarTexto(playlist.nombre || `Playlist ${index + 1}`, 15));
+        const descripcion = escapeHTML(limitarTexto(playlist.descripcion || 'Selección musical recomendada por el artista.', 100));
+        const url = escapeHTML(playlist.url.trim());
+
+        return `
+            <div class="rounded-2xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-lg">
+                <button type="button" class="accordion-playlist w-full flex items-center justify-between gap-4 px-4 py-3 text-left transition hover:bg-slate-800/60" data-index="${index}" aria-expanded="false">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C6.48 0 2 4.48 2 10c0 4.17 2.89 7.7 6.84 9.24.24.09.41.32.41.58v3.16a.75.75 0 0 0 1.24.53l2.16-2.16c.14-.14.35-.22.56-.22H12c5.52 0 10-4.48 10-10S17.52 0 12 0zm-1 5.5h2v5.09l3.19 1.89-.9 1.56L11 18.5V5.5z"/></svg>
+                        </span>
+                        <div class="min-w-0">
+                            <div class="text-sm font-bold text-white truncate">${nombre}</div>
+                            <div class="text-[11px] text-slate-400 line-clamp-2">${descripcion}</div>
+                        </div>
+                    </div>
+                    <svg class="chevron w-5 h-5 text-slate-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+
+                <div class="playlist-contenido hidden px-4 pb-4 pt-0">
+                    <div class="pt-3 border-t border-slate-800/60">
+                        <p class="text-[11px] uppercase tracking-[0.18em] text-slate-500 mb-2">Temática</p>
+                        <p class="text-sm text-slate-300 leading-relaxed">${descripcion}</p>
+                        <a href="${url}" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold px-4 py-2 rounded-xl text-xs transition-all shadow-lg shadow-emerald-500/20">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C6.48 0 2 4.48 2 10c0 4.17 2.89 7.7 6.84 9.24.24.09.41.32.41.58v3.16a.75.75 0 0 0 1.24.53l2.16-2.16c.14-.14.35-.22.56-.22H12c5.52 0 10-4.48 10-10S17.52 0 12 0zm-1 5.5h2v5.09l3.19 1.89-.9 1.56L11 18.5V5.5z"/></svg>
+                            Abrir playlist en Spotify
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    contenedor.querySelectorAll('.accordion-playlist').forEach((button) => {
+        button.addEventListener('click', () => {
+            const panel = button.parentElement.querySelector('.playlist-contenido');
+            const chevron = button.querySelector('.chevron');
+            const isOpen = !panel.classList.contains('hidden');
+
+            panel.classList.toggle('hidden');
+            chevron.classList.toggle('rotate-180', !isOpen);
+            button.setAttribute('aria-expanded', String(!isOpen));
+        });
+    });
+}
  
 function obtenerIdYouTube(url) {
     if (!url) return null;
@@ -37,8 +124,9 @@ async function cargarPerfil() {
  
         // 1. Llenar Datos
         const avatarUrl = data.fotoUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.nombre || 'Artista')}&background=6366f1&color=fff`;
+        const portadaUrl = data.fotoPortadaUrl || avatarUrl;
         document.getElementById('artista-avatar').src = avatarUrl;
-        document.getElementById('hero-bg').style.backgroundImage = `url('${avatarUrl}')`;
+        document.getElementById('hero-bg').style.backgroundImage = `url('${portadaUrl}')`;
         document.getElementById('artista-nombre').textContent = data.nombre || 'Artista Desconocido';
         document.title = `${data.nombre || 'Artista'} - GGmusic`;
 
@@ -87,6 +175,15 @@ async function cargarPerfil() {
             }
         }
  
+        const playlists = Array.isArray(data.playlists)
+            ? data.playlists
+            : (Array.isArray(data.redesSociales?.playlists)
+                ? data.redesSociales.playlists
+                : (data.redesSociales?.spotifyPlaylist
+                    ? [{ nombre: 'Playlist recomendada', descripcion: '', url: data.redesSociales.spotifyPlaylist }]
+                    : []));
+        renderizarPlaylistsPublicas(playlists);
+
         // 3. Biografía
         if (data.biografia && data.biografia.trim() !== '') {
             document.getElementById('texto-biografia').textContent = `"${data.biografia}"`;

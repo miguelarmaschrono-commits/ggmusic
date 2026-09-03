@@ -5,7 +5,13 @@ import { subirImagenCloudinary } from './services/cloudinary.js';
 
 let uidUsuarioActual = null;
 let listaTemas = []; 
-let MAX_TEMAS = 10; 
+let listaPlaylists = [];
+let MAX_TEMAS = 10;
+const MAX_PLAYLISTS = 10;
+
+function limitarTexto(valor, max) {
+    return String(valor ?? '').slice(0, max);
+}
 
 // Referencias al DOM
 const alerta = document.getElementById('alerta-dash');
@@ -15,6 +21,9 @@ const msgLimite = document.getElementById('msg-limite-alcanzado');
 const contadorTemas = document.getElementById('contador-temas');
 const inputFoto = document.getElementById('input-cambiar-foto');
 const textoBtnFoto = document.getElementById('texto-btn-foto');
+const inputPortada = document.getElementById('input-cambiar-portada');
+const textoBtnPortada = document.getElementById('texto-btn-portada');
+const btnCambiarPortada = document.getElementById('btn-cambiar-portada');
 const form = document.getElementById('form-dashboard');
 
 // =======================================================
@@ -59,6 +68,98 @@ function actualizarStatLikes() {
 // =======================================================
 // RENDERIZAR VIDEOGRAFÍA Y TEMAS
 // =======================================================
+function actualizarEstadoBotonPlaylist() {
+    const btnAgregarPlaylist = document.getElementById('btn-agregar-playlist');
+    const msgLimitePlaylists = document.getElementById('msg-limite-playlists');
+    if (!btnAgregarPlaylist) return;
+
+    const alcanzoLimite = listaPlaylists.length >= MAX_PLAYLISTS;
+    btnAgregarPlaylist.disabled = alcanzoLimite;
+    btnAgregarPlaylist.classList.toggle('opacity-50', alcanzoLimite);
+    btnAgregarPlaylist.classList.toggle('cursor-not-allowed', alcanzoLimite);
+    btnAgregarPlaylist.textContent = alcanzoLimite ? `Límite alcanzado (${MAX_PLAYLISTS}/10)` : '➕ Agregar Nueva Playlist';
+
+    if (msgLimitePlaylists) {
+        msgLimitePlaylists.classList.toggle('hidden', !alcanzoLimite);
+    }
+}
+
+function renderizarListaPlaylists() {
+    const contenedorPlaylists = document.getElementById('lista-playlists-container');
+    if (!contenedorPlaylists) return;
+
+    contenedorPlaylists.innerHTML = '';
+
+    listaPlaylists.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'bg-slate-900/60 border border-slate-700/80 p-4 rounded-xl space-y-3 relative group';
+
+        card.innerHTML = `
+            <div class="flex justify-between items-center mb-1">
+                <span class="text-xs font-bold text-emerald-400">Playlist #${index + 1}</span>
+                <button type="button" class="btn-eliminar-playlist text-red-400 hover:text-red-300 text-xs font-semibold px-2 py-1 rounded bg-red-500/10 hover:bg-red-500/20 transition" data-index="${index}">
+                    🗑️ Eliminar
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Nombre de la playlist</label>
+                    <input type="text" maxlength="15" class="input-nombre-playlist w-full bg-slate-950/70 border border-slate-800 rounded-lg p-2 text-xs text-white focus:border-emerald-500 focus:outline-none" placeholder="Ej: Romance, Triste, Chill..." value="${item.nombre || ''}" data-index="${index}">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Temática / Descripción</label>
+                    <textarea rows="2" maxlength="100" class="input-descripcion-playlist w-full bg-slate-950/70 border border-slate-800 rounded-lg p-2 text-xs text-white focus:border-emerald-500 focus:outline-none resize-none" placeholder="Ej: Canciones para conducir en la noche o para cuando estás triste." data-index="${index}">${item.descripcion || ''}</textarea>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">URL de Spotify</label>
+                    <input type="url" class="input-url-playlist w-full bg-slate-950/70 border border-slate-800 rounded-lg p-2 text-xs text-white focus:border-emerald-500 focus:outline-none" placeholder="https://open.spotify.com/playlist/..." value="${item.url || ''}" data-index="${index}">
+                </div>
+            </div>
+        `;
+
+        contenedorPlaylists.appendChild(card);
+    });
+
+    contenedorPlaylists.querySelectorAll('.input-nombre-playlist').forEach(input => {
+        input.addEventListener('input', (e) => {
+            const idx = Number(e.target.getAttribute('data-index'));
+            const valor = limitarTexto(e.target.value, 15);
+            e.target.value = valor;
+            listaPlaylists[idx].nombre = valor;
+        });
+    });
+
+    contenedorPlaylists.querySelectorAll('.input-descripcion-playlist').forEach(input => {
+        input.addEventListener('input', (e) => {
+            const idx = Number(e.target.getAttribute('data-index'));
+            const valor = limitarTexto(e.target.value, 100);
+            e.target.value = valor;
+            listaPlaylists[idx].descripcion = valor;
+        });
+    });
+
+    contenedorPlaylists.querySelectorAll('.input-url-playlist').forEach(input => {
+        input.addEventListener('input', (e) => {
+            const idx = Number(e.target.getAttribute('data-index'));
+            listaPlaylists[idx].url = e.target.value.trim();
+        });
+    });
+
+    contenedorPlaylists.querySelectorAll('.btn-eliminar-playlist').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const idx = Number(e.target.getAttribute('data-index'));
+            listaPlaylists.splice(idx, 1);
+            renderizarListaPlaylists();
+            actualizarEstadoBotonPlaylist();
+        });
+    });
+
+    actualizarEstadoBotonPlaylist();
+}
+
 function renderizarListaTemas() {
     containerTemas.innerHTML = '';
     containerTemas.className = "flex overflow-x-auto gap-4 pb-4 snap-x mb-4 scrollbar-thin scrollbar-thumb-slate-700";
@@ -290,6 +391,11 @@ protegerRuta(async (user) => {
         if (data.fotoUrl) {
             document.getElementById('avatar-preview').src = data.fotoUrl;
         }
+        if (data.fotoPortadaUrl) {
+            document.getElementById('portada-preview').src = data.fotoPortadaUrl;
+        } else if (data.fotoUrl) {
+            document.getElementById('portada-preview').src = data.fotoUrl;
+        }
 
         if (typeof data.limiteCanciones === 'number') {
             MAX_TEMAS = data.limiteCanciones;
@@ -315,6 +421,21 @@ protegerRuta(async (user) => {
             const urlSegura = `https://wa.me/584129315220?text=${encodeURIComponent(mensajeWa)}`;
             btnWhatsapp.href = urlSegura;
         }
+
+        const playlistsGuardadas = Array.isArray(data.playlists)
+            ? data.playlists
+            : (Array.isArray(data.redesSociales?.playlists)
+                ? data.redesSociales.playlists
+                : (data.redesSociales?.spotifyPlaylist
+                    ? [{ nombre: 'Playlist recomendada', descripcion: '', url: data.redesSociales.spotifyPlaylist }]
+                    : []));
+
+        listaPlaylists = playlistsGuardadas.slice(0, MAX_PLAYLISTS).map((p) => ({
+            nombre: limitarTexto(p.nombre || '', 15),
+            descripcion: limitarTexto(p.descripcion || '', 100),
+            url: p.url || ''
+        }));
+        renderizarListaPlaylists();
 
         if (Array.isArray(data.temas) && data.temas.length > 0) {
             listaTemas = data.temas.map(t => ({
@@ -375,6 +496,41 @@ inputFoto.addEventListener('change', async (e) => {
     }
 });
 
+if (btnCambiarPortada && inputPortada) {
+    btnCambiarPortada.addEventListener('click', () => inputPortada.click());
+
+    inputPortada.addEventListener('change', async (e) => {
+        const archivo = e.target.files[0];
+        if (!archivo || !uidUsuarioActual) return;
+
+        try {
+            textoBtnPortada.textContent = 'Subiendo...';
+            inputPortada.disabled = true;
+
+            const nuevaPortadaUrl = await subirImagenCloudinary(archivo);
+            const res = await actualizarPerfilArtista(uidUsuarioActual, { fotoPortadaUrl: nuevaPortadaUrl });
+
+            if (res.exito) {
+                document.getElementById('portada-preview').src = nuevaPortadaUrl;
+                alerta.className = "mb-6 p-3 rounded-lg text-sm text-center bg-green-500/20 text-green-400 border border-green-500/30";
+                alerta.textContent = '¡Foto de portada actualizada con éxito!';
+                alerta.classList.remove('hidden');
+                setTimeout(() => alerta.classList.add('hidden'), 3000);
+            } else {
+                throw new Error(res.mensaje);
+            }
+        } catch (error) {
+            alerta.className = "mb-6 p-3 rounded-lg text-sm text-center bg-red-500/20 text-red-400 border border-red-500/30";
+            alerta.textContent = 'Error al subir la portada: ' + error.message;
+            alerta.classList.remove('hidden');
+        } finally {
+            textoBtnPortada.textContent = '📷 Cambiar portada';
+            inputPortada.disabled = false;
+            inputPortada.value = '';
+        }
+    });
+}
+
 // =======================================================
 // AGREGAR NUEVO TEMA AL ARREGLO
 // =======================================================
@@ -394,6 +550,28 @@ if (btnAgregarTema) {
                 containerTemas.scrollLeft = containerTemas.scrollWidth;
             }, 100);
         }
+    });
+}
+
+const btnAgregarPlaylist = document.getElementById('btn-agregar-playlist');
+if (btnAgregarPlaylist) {
+    btnAgregarPlaylist.addEventListener('click', () => {
+        if (listaPlaylists.length >= MAX_PLAYLISTS) {
+            btnAgregarPlaylist.disabled = true;
+            btnAgregarPlaylist.textContent = `Límite alcanzado (${MAX_PLAYLISTS}/10)`;
+            const msgLimitePlaylists = document.getElementById('msg-limite-playlists');
+            if (msgLimitePlaylists) {
+                msgLimitePlaylists.classList.remove('hidden');
+            }
+            return;
+        }
+
+        listaPlaylists.push({
+            nombre: '',
+            descripcion: '',
+            url: ''
+        });
+        renderizarListaPlaylists();
     });
 }
 
@@ -424,6 +602,17 @@ form.addEventListener('submit', async (e) => {
             likesCount: t.likesCount || 0
         }));
 
+    const playlistsGuardadas = listaPlaylists
+        .slice(0, MAX_PLAYLISTS)
+        .filter(p => p.url && p.url.trim() !== '')
+        .map(p => ({
+            nombre: limitarTexto(p.nombre?.trim() || 'Playlist', 15),
+            descripcion: limitarTexto(p.descripcion?.trim() || '', 100),
+            url: p.url.trim()
+        }));
+
+    const biografia = limitarTexto(document.getElementById('dash-biografia').value.trim(), 300);
+
     const nuevosDatos = {
         nombre: document.getElementById('dash-nombre').value,
         genero: generoElegido,
@@ -436,9 +625,10 @@ form.addEventListener('submit', async (e) => {
             youtube: document.getElementById('red-youtube').value.trim(),
             facebook: document.getElementById('red-facebook').value.trim()
         },
+        playlists: playlistsGuardadas,
         temas: temasFiltrados,
         temaDestacado: temasFiltrados.length > 0 ? temasFiltrados[0].url : '',
-        biografia: document.getElementById('dash-biografia').value.trim()
+        biografia
     };
 
     const res = await actualizarPerfilArtista(uidUsuarioActual, nuevosDatos);
@@ -470,6 +660,10 @@ const contadorBio = document.getElementById('contador-bio');
 
 if (inputBiografia && contadorBio) {
     inputBiografia.addEventListener('input', (e) => {
+        const valor = limitarTexto(e.target.value, 300);
+        if (valor !== e.target.value) {
+            e.target.value = valor;
+        }
         contadorBio.textContent = e.target.value.length;
     });
 }
